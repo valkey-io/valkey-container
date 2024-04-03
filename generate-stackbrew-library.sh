@@ -55,11 +55,10 @@ getArches() {
 getArches 'valkey'
 
 cat <<-EOH
-# this file is generated via https://github.com/docker-library/redis/blob/$(fileCommit "$self")/$self
+# this file is generated via https://github.com/valkey-io/valkey-container/blob/$(fileCommit "$self")/$self
 
-Maintainers: Tianon Gravi <admwiggin@gmail.com> (@tianon),
-             Joseph Ferguson <yosifkit@gmail.com> (@yosifkit)
-GitRepo: https://github.com/docker-library/redis.git
+Maintainers: Roshan Khatri <rvkhatri@amazon.com> (@roshkhatri)
+GitRepo: https://github.com/valkey-io/valkey-container.git
 EOH
 
 # prints "$2$1$3$1...$N"
