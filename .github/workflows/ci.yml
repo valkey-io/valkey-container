@@ -48,6 +48,7 @@ jobs:
         run: ${{ matrix.runs.images }}
 
   build_and_push:
+    if: github.event_name == 'push'
     needs: 
       - generate-jobs
       - test

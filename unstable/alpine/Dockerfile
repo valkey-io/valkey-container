@@ -77,14 +77,12 @@ RUN set -eux; \
 	tar -xzf valkey.tar.gz -C /usr/src/valkey --strip-components=1; \
 	rm valkey.tar.gz; \
 	\
-# disable Redis protected mode [1] as it is unnecessary in context of Docker
+# disable Valkey protected mode [1] as it is unnecessary in context of Docker
 # (ports are not automatically exposed when running inside Docker, but rather explicitly by specifying -p / -P)
-# [1]: https://github.com/redis/redis/commit/edd4d555df57dc84265fdfb4ef59a4678832f6da
 	grep -E '^ *createBoolConfig[(]"protected-mode",.*, *1 *,.*[)],$' /usr/src/valkey/src/config.c; \
 	sed -ri 's!^( *createBoolConfig[(]"protected-mode",.*, *)1( *,.*[)],)$!\10\2!' /usr/src/valkey/src/config.c; \
 	grep -E '^ *createBoolConfig[(]"protected-mode",.*, *0 *,.*[)],$' /usr/src/valkey/src/config.c; \
-# for future reference, we modify this directly in the source instead of just supplying a default configuration flag because apparently "if you specify any argument to redis-server, [it assumes] you are going to specify everything"
-# see also https://github.com/docker-library/redis/issues/4#issuecomment-50780840
+# for future reference, we modify this directly in the source instead of just supplying a default configuration flag because apparently "if you specify any argument to valkey-server, [it assumes] you are going to specify everything"
 # (more exactly, this makes sure the default behavior of "save on SIGTERM" stays functional by default)
 	\
 # https://github.com/jemalloc/jemalloc/issues/467 -- we need to patch the "./configure" for the bundled jemalloc to match how Debian compiles, for compatibility
@@ -106,7 +104,6 @@ RUN set -eux; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\
-# TODO https://github.com/redis/redis/pull/3494 (deduplicate "redis-server" copies)
 	serverMd5="$(md5sum /usr/local/bin/valkey-server | cut -d' ' -f1)"; export serverMd5; \
 	find /usr/local/bin/valkey* -maxdepth 0 \
 		-type f -not -name valkey-server \
