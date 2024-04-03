@@ -75,3 +75,6 @@ jobs:
           push: true
           tags: |
            ${{ secrets.DOCKERHUB_USERNAME }}/valkey:${{ matrix.name }}
+          platforms: linux/amd64,linux/arm64,linux/s390x
+          provenance: false
+          load: false
