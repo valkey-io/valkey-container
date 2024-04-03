@@ -154,11 +154,12 @@ RUN set -eux; \
 {{ ) end -}}
 	\
 	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
-	{{ if "$VALKEY_VERSION" != "unstable" then ( -}}
-		echo "$VALKEY_DOWNLOAD_SHA *valkey.tar.gz" | sha256sum -c -; \
+	{{ if .version == "unstable" then ( -}}
+		echo "Unstable Valkey version, do not compare SHA256SUM" ;\
 	{{ ) else ( -}}
-		echo "Unstable Valkey version"
+		echo "$VALKEY_DOWNLOAD_SHA *valkey.tar.gz" | sha256sum -c -; \
 	{{ ) end -}}
+	\
 	mkdir -p /usr/src/valkey; \
 	tar -xzf valkey.tar.gz -C /usr/src/valkey --strip-components=1; \
 	rm valkey.tar.gz; \
