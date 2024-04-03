@@ -4,13 +4,13 @@ set -e
 # first arg is `-f` or `--some-option`
 # or first arg is `something.conf`
 if [ "${1#-}" != "$1" ] || [ "${1%.conf}" != "$1" ]; then
-	set -- redis-server "$@"
+	set -- valkey-server "$@"
 fi
 
 # allow the container to be started with `--user`
-if [ "$1" = 'redis-server' -a "$(id -u)" = '0' ]; then
-	find . \! -user redis -exec chown redis '{}' +
-	exec gosu redis "$0" "$@"
+if [ "$1" = 'valkey-server' -a "$(id -u)" = '0' ]; then
+	find . \! -user valkey -exec chown valkey '{}' +
+	exec gosu valkey "$0" "$@"
 fi
 
 # set an appropriate umask (if one isn't set already)

@@ -9,26 +9,26 @@ FROM debian:{{ .debian.version }}-slim
 {{ if env.variant == "alpine" then ( -}}
 RUN set -eux; \
 # alpine already has a gid 999, so we'll use the next id
-	addgroup -S -g 1000 redis; \
-	adduser -S -G redis -u 999 redis
+	addgroup -S -g 1000 valkey; \
+	adduser -S -G valkey -u 999 valkey
 {{ ) else ( -}}
 RUN set -eux; \
-	groupadd -r -g 999 redis; \
-	useradd -r -g redis -u 999 redis
+	groupadd -r -g 999 valkey; \
+	useradd -r -g valkey -u 999 valkey
 {{ ) end -}}
 
 # runtime dependencies
 {{ if env.variant == "alpine" then ( -}}
 RUN set -eux; \
 	apk add --no-cache \
-# add tzdata for https://github.com/docker-library/redis/issues/138
+# add tzdata for https://github.com/docker-library/valkey/issues/138
 		tzdata \
 	;
 {{ ) else ( -}}
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
-# add tzdata explicitly for https://github.com/docker-library/redis/issues/138 (see also https://bugs.debian.org/837060 and related)
+# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
 		tzdata \
 	; \
 	rm -rf /var/lib/apt/lists/*
@@ -116,9 +116,9 @@ RUN set -eux; \
 	gosu --version; \
 	gosu nobody true
 
-ENV REDIS_VERSION {{ .version }}
-ENV REDIS_DOWNLOAD_URL {{ .url }}
-ENV REDIS_DOWNLOAD_SHA {{ .sha256 // error("no sha256 for \(.version) (\(env.version))") }}
+ENV VALKEY_VERSION {{ .version }}
+ENV VALKEY_DOWNLOAD_URL {{ .url }}
+ENV VALKEY_DOWNLOAD_SHA {{ .sha256 // error("no sha256 for \(.version) (\(env.version))") }}
 
 RUN set -eux; \
 	\
@@ -132,8 +132,8 @@ RUN set -eux; \
 		musl-dev \
 		openssl-dev \
 # install real "wget" to avoid:
-#   + wget -O redis.tar.gz https://download.redis.io/releases/redis-6.0.6.tar.gz
-#   Connecting to download.redis.io (45.60.121.1:80)
+#   + wget -O valkey.tar.gz https://download.valkey.io/releases/valkey-6.0.6.tar.gz
+#   Connecting to download.valkey.io (45.60.121.1:80)
 #   wget: bad header line:     XxhODalH: btu; path=/; Max-Age=900
 		wget \
 	; \
@@ -153,18 +153,22 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*; \
 {{ ) end -}}
 	\
-	wget -O redis.tar.gz "$REDIS_DOWNLOAD_URL"; \
-	echo "$REDIS_DOWNLOAD_SHA *redis.tar.gz" | sha256sum -c -; \
-	mkdir -p /usr/src/redis; \
-	tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1; \
-	rm redis.tar.gz; \
+	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
+	{{ if "$VALKEY_VERSION" != "unstable" then ( -}}
+		echo "$VALKEY_DOWNLOAD_SHA *valkey.tar.gz" | sha256sum -c -; \
+	{{ ) else ( -}}
+		echo "Unstable Valkey version"
+	{{ ) end -}}
+	mkdir -p /usr/src/valkey; \
+	tar -xzf valkey.tar.gz -C /usr/src/valkey --strip-components=1; \
+	rm valkey.tar.gz; \
 	\
 # disable Redis protected mode [1] as it is unnecessary in context of Docker
 # (ports are not automatically exposed when running inside Docker, but rather explicitly by specifying -p / -P)
 # [1]: https://github.com/redis/redis/commit/edd4d555df57dc84265fdfb4ef59a4678832f6da
-	grep -E '^ *createBoolConfig[(]"protected-mode",.*, *1 *,.*[)],$' /usr/src/redis/src/config.c; \
-	sed -ri 's!^( *createBoolConfig[(]"protected-mode",.*, *)1( *,.*[)],)$!\10\2!' /usr/src/redis/src/config.c; \
-	grep -E '^ *createBoolConfig[(]"protected-mode",.*, *0 *,.*[)],$' /usr/src/redis/src/config.c; \
+	grep -E '^ *createBoolConfig[(]"protected-mode",.*, *1 *,.*[)],$' /usr/src/valkey/src/config.c; \
+	sed -ri 's!^( *createBoolConfig[(]"protected-mode",.*, *)1( *,.*[)],)$!\10\2!' /usr/src/valkey/src/config.c; \
+	grep -E '^ *createBoolConfig[(]"protected-mode",.*, *0 *,.*[)],$' /usr/src/valkey/src/config.c; \
 # for future reference, we modify this directly in the source instead of just supplying a default configuration flag because apparently "if you specify any argument to redis-server, [it assumes] you are going to specify everything"
 # see also https://github.com/docker-library/redis/issues/4#issuecomment-50780840
 # (more exactly, this makes sure the default behavior of "save on SIGTERM" stays functional by default)
@@ -180,26 +184,26 @@ RUN set -eux; \
 		*) extraJemallocConfigureFlags="$extraJemallocConfigureFlags --with-lg-page=16" ;; \
 	esac; \
 	extraJemallocConfigureFlags="$extraJemallocConfigureFlags --with-lg-hugepage=21"; \
-	grep -F 'cd jemalloc && ./configure ' /usr/src/redis/deps/Makefile; \
-	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/redis/deps/Makefile; \
-	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/redis/deps/Makefile; \
+	grep -F 'cd jemalloc && ./configure ' /usr/src/valkey/deps/Makefile; \
+	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
+	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
 	export BUILD_TLS=yes; \
-	make -C /usr/src/redis -j "$(nproc)" all; \
-	make -C /usr/src/redis install; \
+	make -C /usr/src/valkey -j "$(nproc)" all; \
+	make -C /usr/src/valkey install; \
 	\
 # TODO https://github.com/redis/redis/pull/3494 (deduplicate "redis-server" copies)
-	serverMd5="$(md5sum /usr/local/bin/redis-server | cut -d' ' -f1)"; export serverMd5; \
-	find /usr/local/bin/redis* -maxdepth 0 \
-		-type f -not -name redis-server \
+	serverMd5="$(md5sum /usr/local/bin/valkey-server | cut -d' ' -f1)"; export serverMd5; \
+	find /usr/local/bin/valkey* -maxdepth 0 \
+		-type f -not -name valkey-server \
 		-exec sh -eux -c ' \
 			md5="$(md5sum "$1" | cut -d" " -f1)"; \
 			test "$md5" = "$serverMd5"; \
 		' -- '{}' ';' \
-		-exec ln -svfT 'redis-server' '{}' ';' \
+		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	rm -r /usr/src/redis; \
+	rm -r /usr/src/valkey; \
 	\
 {{ if env.variant == "alpine" then ( -}}
 	runDeps="$( \
@@ -208,7 +212,7 @@ RUN set -eux; \
 			| sort -u \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)"; \
-	apk add --no-network --virtual .redis-rundeps $runDeps; \
+	apk add --no-network --virtual .valkey-rundeps $runDeps; \
 	apk del --no-network .build-deps; \
 {{ ) else ( -}}
 	apt-mark auto '.*' > /dev/null; \
@@ -224,12 +228,12 @@ RUN set -eux; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
 {{ ) end -}}
 	\
-	redis-cli --version; \
-	redis-server --version; \
+	valkey-cli --version; \
+	valkey-server --version; \
 	\
 	echo {{
 		{
-			name: "redis-server",
+			name: "valkey-server",
 			version: .version,
 			params: (
 				if env.variant == "alpine" then
@@ -248,9 +252,9 @@ RUN set -eux; \
 				"BSD-3-Clause"
 			]
 		} | sbom | tostring | @sh
-	}} > /usr/local/redis.spdx.json
+	}} > /usr/local/valkey.spdx.json
 
-RUN mkdir /data && chown redis:redis /data
+RUN mkdir /data && chown valkey:valkey /data
 VOLUME /data
 WORKDIR /data
 
@@ -258,4 +262,4 @@ COPY docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 EXPOSE 6379
-CMD ["redis-server"]
+CMD ["valkey-server"]

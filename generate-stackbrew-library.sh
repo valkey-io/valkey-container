@@ -2,8 +2,7 @@
 set -Eeuo pipefail
 
 declare -A aliases=(
-	[7.2]='7 latest'
-	[6.2]='6'
+	[0.9]='0 latest'
 )
 
 self="$(basename "$BASH_SOURCE")"
@@ -53,7 +52,7 @@ getArches() {
 			| xargs bashbrew cat --format '[{{ .RepoName }}:{{ .TagName }}]="{{ join " " .TagEntry.Architectures }}"'
 	) )"
 }
-getArches 'redis'
+getArches 'valkey'
 
 cat <<-EOH
 # this file is generated via https://github.com/docker-library/redis/blob/$(fileCommit "$self")/$self

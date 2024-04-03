@@ -93,7 +93,7 @@ fi
 versions=( "${versions[@]%/}" )
 
 packages="$(
-	wget -qO- 'https://github.com/redis/redis-hashes/raw/master/README' \
+	wget -qO- 'https://github.com/roshkhatri/valkey-hashes/raw/master/README' \
 		| jq -csR '
 			rtrimstr("\n")
 			| split("\n")
@@ -102,8 +102,8 @@ packages="$(
 				capture(
 					[
 						"^hash[[:space:]]+",
-						"(?<file>redis-",
-						"(?<version>([0-9.]+)(-rc[0-9]+)?)",
+						"(?<file>valkey-",
+						"(?<version>([0-9.]+)(-rc[0-9]+)?|unstable",
 						"[.][^[:space:]]+)[[:space:]]+",
 						"(?<type>sha256|sha1)[[:space:]]+", # this filters us down to just the checksum types we are prepared to handle right now
 						"(?<sum>[0-9a-f]{64}|[0-9a-f]{40})[[:space:]]+",
