@@ -93,31 +93,31 @@ fi
 versions=( "${versions[@]%/}" )
 
 packages="$(
-	wget -qO- 'https://github.com/valkey-io/valkey-hashes/raw/master/README' \
-		| jq -csR '
-			rtrimstr("\n")
-			| split("\n")
-			| map(
-				# this capture will naturally ignore comments and blank lines
-				capture(
-					[
-						"^hash[[:space:]]+",
-						"(?<file>valkey-",
-						"(?<version>([0-9.]+)(-rc[0-9]+)?|unstable",
-						"[.][^[:space:]]+)[[:space:]]+",
-						"(?<type>sha256|sha1)[[:space:]]+", # this filters us down to just the checksum types we are prepared to handle right now
-						"(?<sum>[0-9a-f]{64}|[0-9a-f]{40})[[:space:]]+",
-						"(?<url>[^[:space:]]+)",
-						"$"
-					] | join("")
-				)
-				| {
-					version: .version,
-					url: .url,
-					(.type): .sum,
-				}
+	wget -qO- 'https://github.com/valkey-io/valkey-hashes/raw/main/README' \
+	| jq -csR '
+		rtrimstr("\n")
+		| split("\n")
+		| map(
+			# this capture will naturally ignore comments and blank lines
+			capture(
+				[
+					"^hash[[:space:]]+",
+					"(?<file>valkey-",
+						"(?<version>([0-9.]+)(-rc[0-9]+)?|unstable)",
+					"[.][^[:space:]]+)[[:space:]]+",
+					"(?<type>sha256|sha1)[[:space:]]+", # this filters us down to just the checksum types we are prepared to handle right now
+					"(?<sum>[0-9a-f]{64}|[0-9a-f]{40})[[:space:]]+",
+					"(?<url>[^[:space:]]+)",
+					"$"
+				] | join("")
 			)
-		'
+			| {
+				version: .version,
+				url: .url,
+				(.type): .sum,
+			}
+		)
+	'
 )"
 
 for version in "${versions[@]}"; do
@@ -131,6 +131,7 @@ for version in "${versions[@]}"; do
 					| (
 						startswith(env.rcVersion + ".")
 						or startswith(env.rcVersion + "-")
+						or env.rcVersion == "unstable"
 					) and (
 						index("-")
 						| if env.version == env.rcVersion then not else . end
