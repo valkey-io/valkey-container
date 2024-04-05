@@ -7,8 +7,8 @@
 	Please open an Issue stating your question on [the Valkey Community](https://github.com/valkey-io/valkey-container/issues).
 
 # Supported tags and respective `Dockerfile` links
-- [`unstable`](https://github.com/roshkhatri/valkey-container/blob/master/unstable/debian/Dockerfile)
-- [`unstable-alpine`](https://github.com/roshkhatri/valkey-container/blob/master/unstable/alpine/Dockerfile)
+- [`unstable`](https://github.com/valkey-io/valkey-container/blob/master/unstable/debian/Dockerfile)
+- [`unstable-alpine`](https://github.com/valkey-io/valkey-container/blob/master/unstable/alpine/Dockerfile)
 
 What is [Valkey](https://github.com/valkey-io/valkey)?
 --------------
@@ -60,10 +60,6 @@ $ docker run -v /myvalkey/conf:/usr/local/etc/valkey --name myvalkey valkey/valk
 Where `/myvalkey/conf/` is a local directory containing your `valkey.conf` file. Using this method means that there is no need for you to have a Dockerfile for your valkey container.
 
 The mapped directory should be writable, as depending on the configuration and mode of operation, Valkey may need to create additional configuration files or rewrite existing ones.
-
-## `32bit` variant
-
-This variant is *not* a 32bit image (and will not run on 32bit hardware), but includes Valkey compiled as a 32bit binary, especially for users who need the decreased memory requirements associated with that. 
 
 # License
 
