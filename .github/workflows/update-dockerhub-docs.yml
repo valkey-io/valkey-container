@@ -1,0 +1,23 @@
+name: Update Dockerhub description
+
+on:
+    push:
+    workflow_dispatch:
+
+jobs:
+  update-dockerhub:
+    name: Update Dockerhub description
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/valkey
+          readme-filepath: ./dockerhub-description.md
+          short-description: 'Valkey is a high-performance data structure server that primarily serves key/value workloads.'
