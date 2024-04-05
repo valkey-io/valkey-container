@@ -1,3 +1,5 @@
-This project is forked from https://github.com/docker-library/redis which is maintained by [the Docker Community](https://github.com/docker-library/redis)
+This is the Git repo of the [Valkey "Official Image"](https://hub.docker.com/r/valkey/valkey/)
 
-This is the Git repo of the [Valkey "Unofficial Image"](https://hub.docker.com/r/roshkhatri/valkey/)
+The Project is now maintained by [the Valkey Community](https://github.com/valkey-io/valkey/) 
+and it was forked from https://github.com/docker-library/redis.
+
