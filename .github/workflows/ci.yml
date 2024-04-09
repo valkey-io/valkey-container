@@ -30,7 +30,7 @@ jobs:
   test:
     needs: generate-jobs
     strategy: ${{ fromJson(needs.generate-jobs.outputs.strategy) }}
-    name: ${{ matrix.name }}
+    name: ${{ matrix.name }} - test
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -53,9 +53,18 @@ jobs:
       - generate-jobs
       - test
     strategy: ${{ fromJson(needs.generate-jobs.outputs.strategy) }}
-    name: ${{ matrix.name }}
+    name: ${{ matrix.name }} - Build and push
     runs-on: ${{ matrix.os }}
     steps:
+        # Tags are created by generate.sh in the format `valkey-container:<tag>`
+        # This step modifies the tags to `username/valkey:<tag>` to be provided to build-push github action.
+      - name: Modify Tags
+        id: modify_tags
+        run: |
+          original_tags="${{ toJson(matrix.meta.entries[0].tags) }}"
+          tags=$(echo $original_tags | sed 's/valkey-container/${{ secrets.DOCKERHUB_USERNAME }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+          echo "modified_tags=$tags" >> $GITHUB_OUTPUT
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -74,8 +83,7 @@ jobs:
         with:
           file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
           push: true
-          tags: |
-           ${{ secrets.DOCKERHUB_USERNAME }}/valkey:${{ matrix.name }}
+          tags: ${{ steps.modify_tags.outputs.modified_tags }}
           platforms: linux/amd64,linux/arm64
           provenance: false
           load: false
