@@ -137,9 +137,6 @@ for version in "${versions[@]}"; do
 						| (
 							startswith(env.rcVersion + ".")
 							or startswith(env.rcVersion + "-")
-						) and (
-							index("-")
-							| if env.version == env.rcVersion then not else . end
 						)
 					)
 				)[-1]
