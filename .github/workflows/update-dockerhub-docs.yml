@@ -1,8 +1,10 @@
 name: Update Dockerhub description
 
 on:
-    push:
-    workflow_dispatch:
+  workflow_run:
+    workflows: [GitHub CI]
+    types: [completed]
+    branches: [mainline]
 
 jobs:
   update-dockerhub:
