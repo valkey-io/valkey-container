@@ -56,7 +56,8 @@ jobs:
     name: ${{ matrix.name }} - Build and push
     runs-on: ${{ matrix.os }}
     steps:
-
+        # Tags are created by generate.sh in the format `valkey-container:<tag>`
+        # This step modifies the tags to `username/valkey:<tag>` to be provided to build-push github action.
       - name: Modify Tags
         id: modify_tags
         run: |
