@@ -26,6 +26,15 @@ jobs:
           strategy="$("$BASHBREW_SCRIPTS/github-actions/generate.sh")"
           echo "strategy=$strategy" >> "$GITHUB_OUTPUT"
           jq . <<<"$strategy" # sanity check / debugging aid
+  
+  # modify-tags:
+  #   name: Modify tags
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     generate-jobs:
+  #   outputs:
+  #     strategy:
+  #   steps:
 
   test:
     needs: generate-jobs
@@ -69,13 +78,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
-          push: true
-          tags: |
-           ${{ secrets.DOCKERHUB_USERNAME }}/valkey:${{ matrix.name }}
-          platforms: linux/amd64,linux/arm64
-          provenance: false
-          load: false
+      # - name: Build and push
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
+      #     push: true
+      #     tags: |
+      #      ${{ secrets.DOCKERHUB_USERNAME }}/valkey:${{ matrix.name }}
+      #     platforms: linux/amd64,linux/arm64
+      #     provenance: false
+      #     load: false

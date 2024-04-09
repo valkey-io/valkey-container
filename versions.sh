@@ -93,7 +93,7 @@ fi
 versions=( "${versions[@]%/}" )
 
 packages="$(
-	wget -qO- 'https://github.com/valkey-io/valkey-hashes/raw/main/README' \
+	wget -qO- 'https://github.com/roshkhatri/valkey-hashes/raw/main/README' \
 	| jq -csR '
 		rtrimstr("\n")
 		| split("\n")
@@ -122,24 +122,30 @@ packages="$(
 
 for version in "${versions[@]}"; do
 	export version rcVersion="${version%-rc}"
-
-	doc="$(
-		jq <<<"$packages" -c '
-			map(
-				select(
-					.version
-					| (
-						startswith(env.rcVersion + ".")
-						or startswith(env.rcVersion + "-")
-						or env.rcVersion == "unstable"
-					) and (
-						index("-")
-						| if env.version == env.rcVersion then not else . end
+	if [ "$version" = "unstable" ]; then
+		doc="$(
+			jq <<<"$packages" -c '
+				map(select(.version == "unstable"))[-1]
+			'
+		)"
+	else
+		doc="$(
+			jq <<<"$packages" -c '
+				map(
+					select(
+						.version
+						| (
+							startswith(env.rcVersion + ".")
+							or startswith(env.rcVersion + "-")
+						) and (
+							index("-")
+							| if env.version == env.rcVersion then not else . end
+						)
 					)
-				)
-			)[-1]
-		'
-	)"
+				)[-1]
+			'
+		)"
+	fi
 
 	fullVersion="$(jq <<<"$doc" -r '.version')"
 	echo "$version: $fullVersion"
