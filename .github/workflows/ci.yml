@@ -24,17 +24,9 @@ jobs:
         name: Generate Jobs
         run: |
           strategy="$("$BASHBREW_SCRIPTS/github-actions/generate.sh")"
+          echo "$strategy" | jq '.meta.entries[].tags |= map(gsub("valkey-container"; "valkey"))'
           echo "strategy=$strategy" >> "$GITHUB_OUTPUT"
           jq . <<<"$strategy" # sanity check / debugging aid
-  
-  # modify-tags:
-  #   name: Modify tags
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     generate-jobs:
-  #   outputs:
-  #     strategy:
-  #   steps:
 
   test:
     needs: generate-jobs
