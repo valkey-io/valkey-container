@@ -9,8 +9,8 @@
 # Supported tags and respective `Dockerfile` links
 - [`unstable`, `unstable-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/unstable/debian/Dockerfile)
 - [`unstable-alpine`, `unstable-alpine3.19`](https://github.com/valkey-io/valkey-container/blob/master/unstable/alpine/Dockerfile)
-- [`7.2`, `7.2.4-rc1`, `7.2.4-rc1-bookworm`, `7.2-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
-- [`7.2-alpine`, `7.2.4-rc1-alpine`, `7.2.4-rc1-alpine3.19`, `7.2-alpine3.19`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
+- [`7.2`, `7.2-bookworm`, `7.2.5`, `7.2.5-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
+- [`7.2-alpine`, `7.2-alpine3.19`, `7.2.5-alpine`, `7.2.5-alpine3.19`](https://github.com/valkey-io/valkey-container/blob/master/7.2/alpine/Dockerfile)
 
 What is [Valkey](https://github.com/valkey-io/valkey)?
 --------------
