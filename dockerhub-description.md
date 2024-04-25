@@ -9,8 +9,8 @@
 # Supported tags and respective `Dockerfile` links
 - [`unstable`, `unstable-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/unstable/debian/Dockerfile)
 - [`unstable-alpine`, `unstable-alpine3.19`](https://github.com/valkey-io/valkey-container/blob/master/unstable/alpine/Dockerfile)
-- [`7.2`, `7.2-bookworm`, `7.2.5`, `7.2.5-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
-- [`7.2-alpine`, `7.2-alpine3.19`, `7.2.5-alpine`, `7.2.5-alpine3.19`](https://github.com/valkey-io/valkey-container/blob/master/7.2/alpine/Dockerfile)
+- [`7`, `7-bookworm`, `7.2`, `7.2-bookworm`, `7.2.5`, `7.2.5-bookworm`, `bookworm`, `latest`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
+- [`7-alpine`, `7-alpine3.19`, `7.2-alpine`, `7.2-alpine3.19`, `7.2.5-alpine`, `7.2.5-alpine3.19`, `alpine`, `alpine3.19`](https://github.com/valkey-io/valkey-container/blob/master/7.2/alpine/Dockerfile)
 
 What is [Valkey](https://github.com/valkey-io/valkey)?
 --------------
@@ -26,13 +26,13 @@ For the ease of accessing Valkey from other containers via Docker networking, th
 ## start a valkey instance
 
 ```console
-$ docker run --name some-valkey -d valkey/valkey:unstable
+$ docker run --name some-valkey -d valkey/valkey
 ```
 
 ## start with persistent storage
 
 ```console
-$ docker run --name some-valkey -d valkey/valkey:unstable valkey-server --save 60 1 --loglevel warning
+$ docker run --name some-valkey -d valkey/valkey valkey-server --save 60 1 --loglevel warning
 ```
 
 There are several different persistence strategies to choose from. This one will save a snapshot of the DB every 60 seconds if at least 1 write operation was performed (it will also lead to more logs, so the `loglevel` option may be desirable). If persistence is enabled, data is stored in the `VOLUME /data`, which can be used with `--volumes-from some-volume-container` or `-v /docker/host/dir:/data` (see [docs.docker volumes](https://docs.docker.com/engine/tutorials/dockervolumes/)).
@@ -40,7 +40,7 @@ There are several different persistence strategies to choose from. This one will
 ## connecting via `valkey-cli`
 
 ```console
-$ docker run -it --network some-network --rm valkey/valkey:unstable valkey-cli -h some-valkey
+$ docker run -it --network some-network --rm valkey/valkey valkey-cli -h some-valkey
 ```
 
 ## Additionally, If you want to use your own valkey.conf ...
@@ -56,7 +56,7 @@ CMD [ "valkey-server", "/usr/local/etc/valkey/valkey.conf" ]
 Alternatively, you can specify something along the same lines with `docker run` options.
 
 ```console
-$ docker run -v /myvalkey/conf:/usr/local/etc/valkey --name myvalkey valkey/valkey:unstable valkey-server /usr/local/etc/valkey/valkey.conf
+$ docker run -v /myvalkey/conf:/usr/local/etc/valkey --name myvalkey valkey/valkey valkey-server /usr/local/etc/valkey/valkey.conf
 ```
 
 Where `/myvalkey/conf/` is a local directory containing your `valkey.conf` file. Using this method means that there is no need for you to have a Dockerfile for your valkey container.
