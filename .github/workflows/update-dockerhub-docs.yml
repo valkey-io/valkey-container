@@ -20,6 +20,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/valkey
+          repository: ${{ secrets.DOCKERHUB_REPOSITORY }}
           readme-filepath: ./dockerhub-description.md
           short-description: 'Valkey is a high-performance data structure server that primarily serves key/value workloads.'

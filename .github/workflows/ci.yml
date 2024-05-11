@@ -62,7 +62,7 @@ jobs:
         id: modify_tags
         run: |
           original_tags="${{ toJson(matrix.meta.entries[0].tags) }}"
-          tags=$(echo $original_tags | sed 's/valkey-container/${{ secrets.DOCKERHUB_USERNAME }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+          tags=$(echo $original_tags | sed 's/valkey-container/valkey\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
           echo "modified_tags=$tags" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
