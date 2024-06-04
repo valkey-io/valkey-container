@@ -10,7 +10,7 @@ fi
 # allow the container to be started with `--user`
 if [ "$1" = 'valkey-server' -a "$(id -u)" = '0' ]; then
 	find . \! -user valkey -exec chown valkey '{}' +
-	exec gosu valkey "$0" "$@"
+	exec runuser -u valkey -- "$0" "$@"
 fi
 
 # set an appropriate umask (if one isn't set already)
