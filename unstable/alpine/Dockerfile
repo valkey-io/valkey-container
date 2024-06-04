@@ -18,7 +18,7 @@ RUN set -eux; \
 # add tzdata for https://github.com/docker-library/valkey/issues/138
 		tzdata \
 # add runuser for step down from root.
-		runuser
+		runuser \
 	;
 
 ENV VALKEY_VERSION unstable
