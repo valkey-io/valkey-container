@@ -48,7 +48,10 @@ jobs:
         run: ${{ matrix.runs.images }}
 
   build_and_push:
-    if: github.event_name == 'push'
+    if: |
+      (github.event_name == 'push' && 
+      github.repository == 'valkey-io/valkey-container' && 
+      github.head_ref == 'mainline')
     needs: 
       - generate-jobs
       - test
