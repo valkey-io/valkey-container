@@ -13,21 +13,29 @@ set -e
 #        CMD ["hy", "/dir/container.hy"]
 #        EOD
 
-dir="$1"; shift
-[ -d "$dir" ]
+dir="$1"
+shift
+[ -d "$dir" ] || {
+  echo "Directory $dir does not exist"
+  exit 1
+}
 
-imageTag="$1"; shift
+imageTag="$1"
+shift
 
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/docker-library-test-build-XXXXXXXXXX")"
 trap "rm -rf '$tmp'" EXIT
 
-cat > "$tmp/Dockerfile"
+cat >"$tmp/Dockerfile"
 
 from="$(awk -F '[ \t]+' 'toupper($1) == "FROM" { print $2; exit }' "$tmp/Dockerfile")"
-if ! docker inspect "$from" &> /dev/null; then
-	docker pull "$from" > /dev/null
+if ! docker inspect "$from" &>/dev/null; then
+  docker pull "$from" >/dev/null
 fi
 
 cp -RL "$dir" "$tmp/dir"
 
-error="$(command docker build -t "$imageTag" "$tmp" 2>&1)" || { echo "$error" >&2; exit 1; }
+error="$(command docker build -t "$imageTag" "$tmp" 2>&1)" || {
+  echo "$error" >&2
+  exit 1
+}
