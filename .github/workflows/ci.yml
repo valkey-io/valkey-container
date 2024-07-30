@@ -50,7 +50,7 @@ jobs:
   build_and_push:
     if: |
       (github.event_name == 'push' && 
-      github.head_ref == 'mainline')
+      github.ref == 'refs/heads/mainline')
     needs: 
       - generate-jobs
       - test
