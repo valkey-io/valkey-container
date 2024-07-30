@@ -49,9 +49,7 @@ jobs:
 
   build_and_push:
     if: |
-      ((github.event_name == 'push' || 
-      github.event_name == 'schedule') && 
-      github.repository == 'valkey-io/valkey-container' && 
+      (github.event_name == 'push' && 
       github.head_ref == 'mainline')
     needs: 
       - generate-jobs
@@ -61,12 +59,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
         # Tags are created by generate.sh in the format `valkey-container:<tag>`
-        # This step modifies the tags to `username/valkey:<tag>` to be provided to build-push github action.
+        # This step modifies the tags to `account/valkey:<tag>` to be provided to build-push github action.
       - name: Modify Tags
         id: modify_tags
         run: |
           original_tags="${{ toJson(matrix.meta.entries[0].tags) }}"
-          tags=$(echo $original_tags | sed 's/valkey-container/valkey\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+          tags=$(echo $original_tags | sed 's/valkey-container/${{ secrets.DOCKERHUB_ACCOUNT }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
           echo "modified_tags=$tags" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
