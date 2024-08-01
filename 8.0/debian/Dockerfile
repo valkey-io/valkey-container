@@ -4,43 +4,41 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM alpine:3.20
+FROM debian:bookworm-slim
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN set -eux; \
-# alpine already has a gid 999, so we'll use the next id
-	addgroup -S -g 1000 valkey; \
-	adduser -S -G valkey -u 999 valkey
+	groupadd -r -g 999 valkey; \
+	useradd -r -g valkey -u 999 valkey
 
 # runtime dependencies
 RUN set -eux; \
-	apk add --no-cache \
-# add tzdata for https://github.com/docker-library/valkey/issues/138
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
 		tzdata \
-		# add setpriv for step down from root.
-		setpriv \
-	;
+	; \
+	rm -rf /var/lib/apt/lists/*
 
-ENV VALKEY_VERSION 7.2.6
-ENV VALKEY_DOWNLOAD_URL https://github.com/valkey-io/valkey/archive/refs/tags/7.2.6.tar.gz
-ENV VALKEY_DOWNLOAD_SHA 5272f244deecd5655d805aabc71c84a7c7699bc4fa009dd7fc550806a042d512
+ENV VALKEY_VERSION 8.0.0-rc1
+ENV VALKEY_DOWNLOAD_URL https://github.com/valkey-io/valkey/archive/refs/tags/8.0.0-rc1.tar.gz
+ENV VALKEY_DOWNLOAD_SHA 0455cbc76c8d4cbddfe9a668cd5d41fe7c35ce4ab4e2bbe89128e9fed3cb72b0
 
 RUN set -eux; \
 	\
-	apk add --no-cache --virtual .build-deps \
-		coreutils \
-		dpkg-dev dpkg \
-		gcc \
-		linux-headers \
-		make \
-		musl-dev \
-		openssl-dev \
-# install real "wget" to avoid:
-#   + wget -O valkey.tar.gz https://download.valkey.io/releases/valkey-6.0.6.tar.gz
-#   Connecting to download.valkey.io (45.60.121.1:80)
-#   wget: bad header line:     XxhODalH: btu; path=/; Max-Age=900
+	savedAptMark="$(apt-mark showmanual)"; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+		ca-certificates \
 		wget \
+		\
+		dpkg-dev \
+		gcc \
+		libc6-dev \
+		libssl-dev \
+		make \
 	; \
+	rm -rf /var/lib/apt/lists/*; \
 	\
 	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
 			echo "$VALKEY_DOWNLOAD_SHA *valkey.tar.gz" | sha256sum -c -; \
@@ -88,19 +86,22 @@ RUN set -eux; \
 	\
 	rm -r /usr/src/valkey; \
 	\
-	runDeps="$( \
-		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local \
-			| tr ',' '\n' \
-			| sort -u \
-			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
-	)"; \
-	apk add --no-network --virtual .valkey-rundeps $runDeps; \
-	apk del --no-network .build-deps; \
+	apt-mark auto '.*' > /dev/null; \
+	[ -z "$savedAptMark" ] || apt-mark manual $savedAptMark > /dev/null; \
+	find /usr/local -type f -executable -exec ldd '{}' ';' \
+		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
+		| sort -u \
+		| xargs -r dpkg-query --search \
+		| cut -d: -f1 \
+		| sort -u \
+		| xargs -r apt-mark manual \
+	; \
+	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
 	\
 	valkey-cli --version; \
 	valkey-server --version; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"7.2.6","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@7.2.6?os_name=alpine&os_version=3.20"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.0.0-rc1","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.0.0-rc1?os_name=debian&os_version=bookworm"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 RUN mkdir /data && chown valkey:valkey /data
 VOLUME /data
