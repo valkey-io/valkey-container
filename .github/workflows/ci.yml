@@ -3,6 +3,9 @@ name: GitHub CI
 on:
   pull_request:
   push:
+    paths-ignore:
+      - '**.md'
+      - '**.sh'
   schedule:
     - cron: 0 0 * * 0
 

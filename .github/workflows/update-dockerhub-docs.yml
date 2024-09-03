@@ -1,6 +1,7 @@
 name: Update Dockerhub description
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: [GitHub CI]
     types: [completed]
