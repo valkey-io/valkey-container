@@ -6,7 +6,7 @@ on:
     paths:
       - '**/Dockerfile*'
   schedule:
-    - cron: 0 0 * * 0
+    - cron: '0 0 * * *'
 
 defaults:
   run:
@@ -26,6 +26,11 @@ jobs:
         name: Generate Jobs
         run: |
           strategy="$("$BASHBREW_SCRIPTS/github-actions/generate.sh")"
+          # If triggered by a cron event, filter strategy to include `unstable` and `unstable-alpine`
+          if [[ "${{ github.event_name }}" == "schedule" ]]; then
+            strategy=$(jq -c '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name =="unstable" or .name== "unstable-alpine")]}}' <<<"$strategy")
+          fi
+
           echo "strategy=$strategy" >> "$GITHUB_OUTPUT"
           jq . <<<"$strategy" # sanity check / debugging aid
 
@@ -51,7 +56,7 @@ jobs:
 
   build_and_push:
     if: |
-      (github.event_name == 'push' && 
+      ((github.event_name == 'push' || github.event_name == 'schedule') && 
       github.ref == 'refs/heads/mainline')
     needs: 
       - generate-jobs
@@ -91,3 +96,13 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           provenance: false
           load: false
+
+  update-dockerhub-description:
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/mainline')
+    needs: 
+      - generate-jobs
+      - test
+      - build_and_push
+    name: Update DockerHub Description
+    uses: ./.github/workflows/update-dockerhub-docs.yml
