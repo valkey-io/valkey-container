@@ -11,9 +11,9 @@
     }
   },
   "8.0": {
-    "version": "8.0.0-rc2",
-    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.0-rc2.tar.gz",
-    "sha256": "7592865c60578cc6d9f5cd5f0a6f77d946ac21a71bf9863bcf18b5e2835ae065",
+    "version": "8.0.0",
+    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.0.tar.gz",
+    "sha256": "f87fef2ba81ae4bce891b874fba58cfde2d19370a3bcac20f0e17498b33c33c0",
     "debian": {
       "version": "bookworm"
     },
