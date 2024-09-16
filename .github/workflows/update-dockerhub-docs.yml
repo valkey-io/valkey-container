@@ -3,6 +3,13 @@ name: Update Dockerhub description
 on:
   workflow_dispatch:
   workflow_call:
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+      DOCKERHUB_REPOSITORY:
+        required: true
 
 jobs:
   update-dockerhub:
