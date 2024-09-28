@@ -19,4 +19,4 @@ if [ "$um" = '0022' ]; then
 	umask 0077
 fi
 
-exec "$@"
+exec "$@" $VALKEY_EXTRA_FLAGS
