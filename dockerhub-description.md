@@ -1,9 +1,9 @@
 # Quick reference
 
--	**Maintained by**:  
+-	**Maintained by**:
 	[the Valkey Community](https://github.com/valkey-io/valkey-container)
 
--	**Where to get help**:  
+-	**Where to get help**:
 	Please open an Issue stating your question on [the Valkey Community](https://github.com/valkey-io/valkey-container/issues).
 
 # Supported tags and respective `Dockerfile` links
@@ -47,6 +47,15 @@ There are several different persistence strategies to choose from. This one will
 
 ```console
 $ docker run -it --network some-network --rm valkey/valkey valkey-cli -h some-valkey
+```
+
+## Pass additional start arguments with environment variable
+
+In case you'd like to configure the start arguments of `valkey-server`
+with environment variable, you can pass them with `VALKEY_EXTRA_FLAGS`
+without having to overwrite the CMD:
+```console
+$ docker run --env VALKEY_EXTRA_FLAGS='--save 60 1 --loglevel warning' valkey/valkey
 ```
 
 ## Additionally, If you want to use your own valkey.conf ...
