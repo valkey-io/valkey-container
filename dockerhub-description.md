@@ -63,7 +63,7 @@ $ docker run --env VALKEY_EXTRA_FLAGS='--save 60 1 --loglevel warning' valkey/va
 You can create your own Dockerfile that adds a valkey.conf from the context into /data/, like so.
 
 ```dockerfile
-FROM valkey
+FROM valkey/valkey
 COPY valkey.conf /usr/local/etc/valkey/valkey.conf
 CMD [ "valkey-server", "/usr/local/etc/valkey/valkey.conf" ]
 ```
