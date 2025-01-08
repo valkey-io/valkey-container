@@ -1,8 +1,8 @@
 {
   "7.2": {
-    "version": "7.2.7",
-    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/7.2.7.tar.gz",
-    "sha256": "8aae9c7d2c007a6b7c7221f65a420525a7a0106be66dfaa161ad6f3438509334",
+    "version": "7.2.8",
+    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/7.2.8.tar.gz",
+    "sha256": "2d990b374b783ba05e0081498718ed0640f84bc60b6db24a4bc069f9775f778c",
     "debian": {
       "version": "bookworm"
     },
