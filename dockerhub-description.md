@@ -14,7 +14,7 @@
 - [`7.2.8`, `7.2`, `7`, `7.2.8-bookworm`, `7.2-bookworm`, `7-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
 - [`7.2.8-alpine`, `7.2-alpine`, `7-alpine`, `7.2.8-alpine3.21`, `7.2-alpine3.21`, `7-alpine3.21`](https://github.com/valkey-io/valkey-container/blob/master/7.2/alpine/Dockerfile)
 - [`8.1-alpine`, `8.1.0-rc1-alpine`, `8.1.0-rc1-alpine3.21`, `8.1-alpine3.21`](https://github.com/valkey-io/valkey-container/blob/master/8.1/alpine/Dockerfile)
-- [`8.1.0`, `8.1`, `latest`, `8.1.0-bookworm`, `8.1-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/8.1/debian/Dockerfile)
+- [`8.1.0-rc1`, `8.1`, `8.1.0-rc1-bookworm`, `8.1-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/8.1/debian/Dockerfile)
 
 What is [Valkey](https://github.com/valkey-io/valkey)?
 --------------
