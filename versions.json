@@ -21,6 +21,17 @@
       "version": "3.21"
     }
   },
+  "8.1": {
+    "version": "8.1.0-rc1",
+    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/8.1.0-rc1.tar.gz",
+    "sha256": "0ee7336538ee1aae192e19f30990078922f453b5bf5ef2cb86a8a884cf5d84da",
+    "debian": {
+      "version": "bookworm"
+    },
+    "alpine": {
+      "version": "3.21"
+    }
+  },
   "unstable": {
     "version": "unstable",
     "url": "https://github.com/valkey-io/valkey/archive/unstable.tar.gz",
