@@ -10,7 +10,7 @@
 - [`unstable`, `unstable-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/unstable/debian/Dockerfile)
 - [`unstable-alpine`, `unstable-alpine3.21`](https://github.com/valkey-io/valkey-container/blob/master/unstable/alpine/Dockerfile)
 - [`8.0.2`, `8.0`, `8`, `8.0.2-bookworm`, `8.0-bookworm`, `8-bookworm`, `bookworm`](https://github.com/valkey-io/valkey-container/blob/master/8.0/debian/Dockerfile)
-- [`8.0.2-alpine`, `8.0-alpine`, `8-alpine`, `8.0.2-alpine3.21`, `8.0-alpine3.21`, `8-alpine3.21`, `alpine3.21`, `alpine`](https://github.com/valkey-io/valkey-container/blob/master/8.0/alpine/Dockerfile)
+- [`8.0.2-alpine`, `8.0-alpine`, `8-alpine`, `alpine`, `8.0.2-alpine3.21`, `8.0-alpine3.21`, `8-alpine3.21`, `alpine3.21`](https://github.com/valkey-io/valkey-container/blob/master/8.0/alpine/Dockerfile)
 - [`7.2.8`, `7.2`, `7`, `7.2.8-bookworm`, `7.2-bookworm`, `7-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
 - [`7.2.8-alpine`, `7.2-alpine`, `7-alpine`, `7.2.8-alpine3.21`, `7.2-alpine3.21`, `7-alpine3.21`](https://github.com/valkey-io/valkey-container/blob/master/7.2/alpine/Dockerfile)
 - [`8.1-alpine`, `8.1.0-rc1-alpine`, `8.1.0-rc1-alpine3.21`, `8.1-alpine3.21`](https://github.com/valkey-io/valkey-container/blob/master/8.1/alpine/Dockerfile)
