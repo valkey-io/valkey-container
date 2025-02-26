@@ -56,14 +56,17 @@ jobs:
 
   build_and_push:
     if: |
-      ((github.event_name == 'push' || github.event_name == 'schedule') && 
+      ((github.event_name == 'push' || github.event_name == 'schedule') &&
       github.ref == 'refs/heads/mainline')
-    needs: 
+    needs:
       - generate-jobs
       - test
     strategy: ${{ fromJson(needs.generate-jobs.outputs.strategy) }}
     name: ${{ matrix.name }} - Build and push
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      packages: write
     steps:
         # Tags are created by generate.sh in the format `valkey-container:<tag>`
         # This step modifies the tags to `account/valkey:<tag>` to be provided to build-push github action.
@@ -71,8 +74,10 @@ jobs:
         id: modify_tags
         run: |
           original_tags="${{ toJson(matrix.meta.entries[0].tags) }}"
-          tags=$(echo $original_tags | sed 's/valkey-container/${{ secrets.DOCKERHUB_ACCOUNT }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
-          echo "modified_tags=$tags" >> $GITHUB_OUTPUT
+          docker_hub_tags=$(echo $original_tags | sed 's/valkey-container/${{ secrets.DOCKERHUB_ACCOUNT }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+          ghcr_tags=$(echo $original_tags | sed 's/valkey-container/ghcr.io\/${{ github.repository_owner }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+          echo "docker_hub_tags=$docker_hub_tags" >> $GITHUB_OUTPUT
+          echo "ghcr_tags=$ghcr_tags" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -87,12 +92,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
           push: true
-          tags: ${{ steps.modify_tags.outputs.modified_tags }}
+          tags: |-
+            ${{ steps.modify_tags.outputs.docker_hub_tags }}
+            ${{ steps.modify_tags.outputs.ghcr_tags }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           provenance: false
           load: false
@@ -100,7 +114,7 @@ jobs:
   update-dockerhub-description:
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/mainline')
-    needs: 
+    needs:
       - generate-jobs
       - test
       - build_and_push
