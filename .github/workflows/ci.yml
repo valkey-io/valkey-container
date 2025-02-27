@@ -105,9 +105,8 @@ jobs:
         with:
           file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
           push: true
-          tags: |-
-            ${{ steps.modify_tags.outputs.docker_hub_tags }}
-            ${{ steps.modify_tags.outputs.ghcr_tags }}
+          tags: >-
+            ${{ steps.modify_tags.outputs.docker_hub_tags }},${{ steps.modify_tags.outputs.ghcr_tags }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           provenance: false
           load: false
