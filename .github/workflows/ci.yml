@@ -69,7 +69,8 @@ jobs:
       packages: write
     steps:
         # Tags are created by generate.sh in the format `valkey-container:<tag>`
-        # This step modifies the tags to `account/valkey:<tag>` to be provided to build-push github action.
+        # For Docker Hub this step modifies the tags to `account/valkey:<tag>` to be provided to build-push github action.
+        # For GitHub Container Registry this step modifies the tags to `ghcr.io/<repo-owner>/valkey:<tag>` to be provided to build-push github action.
       - name: Modify Tags
         id: modify_tags
         run: |
