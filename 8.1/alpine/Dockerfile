@@ -21,9 +21,9 @@ RUN set -eux; \
 		setpriv \
 	;
 
-ENV VALKEY_VERSION 8.1.0-rc2
-ENV VALKEY_DOWNLOAD_URL https://github.com/valkey-io/valkey/archive/refs/tags/8.1.0-rc2.tar.gz
-ENV VALKEY_DOWNLOAD_SHA 928769d2b8172052912a6bb65a46a10f9d420a3b54c7a9ad46bc451cc901fb27
+ENV VALKEY_VERSION 8.1.0
+ENV VALKEY_DOWNLOAD_URL https://github.com/valkey-io/valkey/archive/refs/tags/8.1.0.tar.gz
+ENV VALKEY_DOWNLOAD_SHA 559274e81049326251fa5b1e1c64d46d3d4d605a691481e0819133ca1f1db44f
 
 RUN set -eux; \
 	\
@@ -100,7 +100,7 @@ RUN set -eux; \
 	valkey-cli --version; \
 	valkey-server --version; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.1.0-rc2","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.1.0-rc2?os_name=alpine&os_version=3.21"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.1.0","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.1.0?os_name=alpine&os_version=3.21"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 RUN mkdir /data && chown valkey:valkey /data
 VOLUME /data
