@@ -31,6 +31,7 @@ RUN set -eux; \
 		coreutils \
 		dpkg-dev dpkg \
 		gcc \
+		g++ \
 		linux-headers \
 		make \
 		musl-dev \
@@ -71,8 +72,19 @@ RUN set -eux; \
 	grep -F 'cd jemalloc && ./configure ' /usr/src/valkey/deps/Makefile; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
-	\
-	export BUILD_TLS=yes; \
+	\ 
+	if [ "unstable" = "unstable" ]; then \
+		export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+		echo "Version is unstable, using USE_FAST_FLOAT"; \
+	else \
+		majorMinor="$(echo unstable | cut -d. -f1,2)"; \
+		if [ "$(echo "$majorMinor >= 8.1" | bc -l)" -eq 1 ]; then \
+			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+			echo "Version unstable is >= 8.1, using USE_FAST_FLOAT"; \
+		else \
+			export BUILD_TLS=yes; \
+		fi; \
+	fi; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\
