@@ -72,10 +72,9 @@ RUN set -eux; \
 	grep -F 'cd jemalloc && ./configure ' /usr/src/valkey/deps/Makefile; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
-	\ 
-			export BUILD_TLS=yes; \
-		echo "Version 8.0.2 is less than 8.1 - not enabling USE_FAST_FLOAT"; \
-		make -C /usr/src/valkey -j "$(nproc)" all; \
+	\
+	export BUILD_TLS=yes; \
+	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\
 	serverMd5="$(md5sum /usr/local/bin/valkey-server | cut -d' ' -f1)"; export serverMd5; \

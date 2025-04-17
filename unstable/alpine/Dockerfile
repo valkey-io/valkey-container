@@ -72,10 +72,10 @@ RUN set -eux; \
 	grep -F 'cd jemalloc && ./configure ' /usr/src/valkey/deps/Makefile; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
-	\ 
-			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
-		echo "Unstable version detected — enabling USE_FAST_FLOAT"; \
-		make -C /usr/src/valkey -j "$(nproc)" all; \
+	\
+	echo "Unstable version detected — enabling USE_FAST_FLOAT"; \
+	export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\
 	serverMd5="$(md5sum /usr/local/bin/valkey-server | cut -d' ' -f1)"; export serverMd5; \
