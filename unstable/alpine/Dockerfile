@@ -31,7 +31,6 @@ RUN set -eux; \
 		coreutils \
 		dpkg-dev dpkg \
 		gcc \
-		g++ \
 		linux-headers \
 		make \
 		musl-dev \
@@ -74,7 +73,8 @@ RUN set -eux; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
 	echo "Unstable version detected — enabling USE_FAST_FLOAT"; \
-	export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+		apk add --no-cache g++; \
+		export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\

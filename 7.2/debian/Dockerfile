@@ -34,7 +34,6 @@ RUN set -eux; \
 		\
 		dpkg-dev \
 		gcc \
-		g++ \
 		libc6-dev \
 		libssl-dev \
 		make \
