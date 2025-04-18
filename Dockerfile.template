@@ -110,17 +110,21 @@ RUN set -eux; \
 {{ if .version == "unstable" then ( -}}
 	echo "Unstable version detected — enabling USE_FAST_FLOAT"; \
 	{{ if env.variant == "alpine" then ( -}}
-	apk add --no-cache g++; \
+		apk add --no-cache g++; \
 	{{ ) else ( -}}
-	apt-get install -y --no-install-recommends g++; \
+		apt-get update; \
+		apt-get install -y --no-install-recommends g++; \
+		rm -rf /var/lib/apt/lists/*; \
 	{{ ) end -}}
 	export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
 {{ ) elif ( (.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber) ) >= 801 then ( -}}
 	echo "Version {{ .version }} is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 	{{ if env.variant == "alpine" then ( -}}
-	apk add --no-cache g++; \
+		apk add --no-cache g++; \
 	{{ ) else ( -}}
-	apt-get install -y --no-install-recommends g++; \
+		apt-get update; \
+		apt-get install -y --no-install-recommends g++; \
+		rm -rf /var/lib/apt/lists/*; \
 	{{ ) end -}}
 	export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
 {{ ) else ( -}}
