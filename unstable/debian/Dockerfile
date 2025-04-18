@@ -38,7 +38,6 @@ RUN set -eux; \
 		libssl-dev \
 		make \
 	; \
-	rm -rf /var/lib/apt/lists/*; \
 	\
 	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
 			echo "Unstable Valkey version, do not compare SHA256SUM" ;\
@@ -71,8 +70,7 @@ RUN set -eux; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
 	echo "Unstable version detected — enabling USE_FAST_FLOAT"; \
-			apt-get update; \
-		apt-get install -y --no-install-recommends g++; \
+			apt-get install -y --no-install-recommends g++; \
 		rm -rf /var/lib/apt/lists/*; \
 		export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
@@ -101,6 +99,7 @@ RUN set -eux; \
 		| xargs -r apt-mark manual \
 	; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+	rm -rf /var/lib/apt/lists/*; \
 	\
 	valkey-cli --version; \
 	valkey-server --version; \
