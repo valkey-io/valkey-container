@@ -18,5 +18,17 @@ jobs:
         run: ./apply-templates.sh
       - name: Check Git Status
         run: |
+          echo "==== GIT STATUS BEGIN ===="
           status="$(git status --short)"
-          [ -z "$status" ]
+          printf '%s\n' "$status" | cat -A
+          echo "==== GIT STATUS END ===="
+
+          git status
+          
+          if [ -z "$status" ]; then
+            echo "No changes detected."
+          else
+            echo "Changes detected!"
+            git diff
+            exit 1
+          fi
