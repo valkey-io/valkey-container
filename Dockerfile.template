@@ -70,6 +70,7 @@ RUN set -eux; \
 		libssl-dev \
 		make \
 	; \
+	rm -rf /var/lib/apt/lists/*; \
 {{ ) end -}}
 	\
 	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
@@ -111,6 +112,7 @@ RUN set -eux; \
 	{{ if env.variant == "alpine" then ( -}}
 		apk add --no-cache g++; \
 	{{ ) else ( -}}
+		apt-get update; \
 		apt-get install -y --no-install-recommends g++; \
 		rm -rf /var/lib/apt/lists/*; \
 	{{ ) end -}}
@@ -120,6 +122,7 @@ RUN set -eux; \
 	{{ if env.variant == "alpine" then ( -}}
 		apk add --no-cache g++; \
 	{{ ) else ( -}}
+		apt-get update; \
 		apt-get install -y --no-install-recommends g++; \
 		rm -rf /var/lib/apt/lists/*; \
 	{{ ) end -}}
@@ -163,7 +166,6 @@ RUN set -eux; \
 		| xargs -r apt-mark manual \
 	; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-	rm -rf /var/lib/apt/lists/*; \
 {{ ) end -}}
 	\
 	valkey-cli --version; \

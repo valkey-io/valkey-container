@@ -38,6 +38,7 @@ RUN set -eux; \
 		libssl-dev \
 		make \
 	; \
+	rm -rf /var/lib/apt/lists/*; \
 	\
 	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
 			echo "$VALKEY_DOWNLOAD_SHA *valkey.tar.gz" | sha256sum -c -; \
@@ -96,7 +97,6 @@ RUN set -eux; \
 		| xargs -r apt-mark manual \
 	; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-	rm -rf /var/lib/apt/lists/*; \
 	\
 	valkey-cli --version; \
 	valkey-server --version; \
