@@ -1,8 +1,8 @@
 {
   "7.2": {
-    "version": "7.2.8",
-    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/7.2.8.tar.gz",
-    "sha256": "2d990b374b783ba05e0081498718ed0640f84bc60b6db24a4bc069f9775f778c",
+    "version": "7.2.9",
+    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/7.2.9.tar.gz",
+    "sha256": "d05cb3307752314083cf73628f2b8413a4445b8afb7ac27d77a29c663026e327",
     "debian": {
       "version": "bookworm"
     },
@@ -11,9 +11,9 @@
     }
   },
   "8.0": {
-    "version": "8.0.2",
-    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.2.tar.gz",
-    "sha256": "e052c45b3cbe512e24fdfdc3fd337f9f5e4b8f8b8713f349ba867b829c8ff11a",
+    "version": "8.0.3",
+    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.3.tar.gz",
+    "sha256": "9141b6a91572e714fae8bc01e5031828ac6a8eb8e012e6836673d18dbfe4a47b",
     "debian": {
       "version": "bookworm"
     },
