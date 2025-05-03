@@ -5,8 +5,6 @@ This Project is the Git repo of the [Valkey "Official Image"](https://hub.docker
 The Project is now maintained by [the Valkey Community](https://github.com/valkey-io/valkey/)
 and it was forked from [docker-library/redis](https://github.com/docker-library/redis).
 
-Alternatively the images can also be found on the [GitHub Container Registry](https://ghcr.io/valkey-io/valkey).
-
 ## When should you build and publish new Docker Image?
 
 You should build and publish a new Docker Image after a new major, minor or patch version of Valkey is released on the [main Valkey repository](https://github.com/valkey-io/valkey).
