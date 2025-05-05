@@ -47,6 +47,7 @@ RUN set -eux; \
 		coreutils \
 		dpkg-dev dpkg \
 		gcc \
+		g++ \
 		linux-headers \
 		make \
 		musl-dev \
@@ -110,7 +111,6 @@ RUN set -eux; \
 {{ if .version == "unstable" then ( -}}
 	echo "Unstable version detected — enabling USE_FAST_FLOAT"; \
 	{{ if env.variant == "alpine" then ( -}}
-		apk add --no-cache g++; \
 	{{ ) else ( -}}
 		apt-get update; \
 		apt-get install -y --no-install-recommends g++; \
@@ -120,7 +120,6 @@ RUN set -eux; \
 {{ ) elif ( (.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber) ) >= 801 then ( -}}
 	echo "Version {{ .version }} is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 	{{ if env.variant == "alpine" then ( -}}
-		apk add --no-cache g++; \
 	{{ ) else ( -}}
 		apt-get update; \
 		apt-get install -y --no-install-recommends g++; \

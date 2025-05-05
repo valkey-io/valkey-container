@@ -31,6 +31,7 @@ RUN set -eux; \
 		coreutils \
 		dpkg-dev dpkg \
 		gcc \
+		g++ \
 		linux-headers \
 		make \
 		musl-dev \
