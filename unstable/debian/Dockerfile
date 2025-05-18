@@ -21,6 +21,7 @@ RUN set -eux; \
 		gcc \
 		libc6-dev \
 		libssl-dev \
+		libsystemd-dev \
 		make \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
@@ -59,6 +60,7 @@ RUN set -eux; \
 		apt-get install -y --no-install-recommends g++; \
 		rm -rf /var/lib/apt/lists/*; \
 		export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+	export USE_SYSTEMD=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\

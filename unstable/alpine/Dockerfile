@@ -57,6 +57,7 @@ RUN set -eux; \
 	\
 	echo "Unstable version detected — enabling USE_FAST_FLOAT"; \
 			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+	\
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\

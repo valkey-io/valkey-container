@@ -86,6 +86,17 @@ Where `/myvalkey/conf/` is a local directory containing your `valkey.conf` file.
 
 The mapped directory should be writable, as depending on the configuration and mode of operation, Valkey may need to create additional configuration files or rewrite existing ones.
 
+## Systemd startup notification with Podman Quadlet
+
+Valkey supports startup notification to let systemd know it is ready to serve before its dependants are started. To use this, specify the following in your Quadlet service:
+
+```systemd
+[Container]
+Image=docker.io/valkey/valkey:latest
+Exec=valkey-server --supervised systemd
+Notify=true
+```
+
 # Image Variants
 
 The `valkey` images come in many flavors, each designed for a specific use case.

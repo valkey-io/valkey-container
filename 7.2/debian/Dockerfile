@@ -21,6 +21,7 @@ RUN set -eux; \
 		gcc \
 		libc6-dev \
 		libssl-dev \
+		libsystemd-dev \
 		make \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
@@ -55,6 +56,7 @@ RUN set -eux; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
 	export BUILD_TLS=yes; \
+	export USE_SYSTEMD=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\

@@ -32,6 +32,7 @@ RUN set -eux; \
 		gcc \
 		libc6-dev \
 		libssl-dev \
+		libsystemd-dev \
 		make \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
@@ -90,6 +91,11 @@ RUN set -eux; \
 	export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
 {{ ) else ( -}}
 	export BUILD_TLS=yes; \
+{{ ) end -}}
+{{ if env.variant == "alpine" then ( -}}
+	\
+{{ ) else ( -}}
+	export USE_SYSTEMD=yes; \
 {{ ) end -}}
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
