@@ -4,34 +4,19 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim AS base
 
-# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
-RUN set -eux; \
-	groupadd -r -g 999 valkey; \
-	useradd -r -g valkey -u 999 valkey
-
-# runtime dependencies
-RUN set -eux; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
-		tzdata \
-	; \
-	rm -rf /var/lib/apt/lists/*
+FROM base AS build
 
 ENV VALKEY_VERSION unstable
-ENV VALKEY_DOWNLOAD_URL https://github.com/valkey-io/valkey/archive/unstable.tar.gz
 ENV VALKEY_DOWNLOAD_SHA 0000000000000000000000000000000000000000000000000000000000000000
+
+ADD "https://github.com/valkey-io/valkey/archive/unstable.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
-	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
-		ca-certificates \
-		wget \
-		\
 		dpkg-dev \
 		gcc \
 		libc6-dev \
@@ -40,7 +25,6 @@ RUN set -eux; \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
-	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
 			echo "Unstable Valkey version, do not compare SHA256SUM" ;\
 		\
 	mkdir -p /usr/src/valkey; \
@@ -88,26 +72,31 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	rm -r /usr/src/valkey; \
-	\
-	apt-mark auto '.*' > /dev/null; \
-	[ -z "$savedAptMark" ] || apt-mark manual $savedAptMark > /dev/null; \
-	find /usr/local -type f -executable -exec ldd '{}' ';' \
-		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
-		| sort -u \
-		| xargs -r dpkg-query --search \
-		| cut -d: -f1 \
-		| sort -u \
-		| xargs -r apt-mark manual \
-	; \
-	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-	\
-	valkey-cli --version; \
-	valkey-server --version; \
-	\
 	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"unstable","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@unstable?os_name=debian&os_version=bookworm"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
-RUN mkdir /data && chown valkey:valkey /data
+FROM base
+
+# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
+RUN set -eux; \
+	groupadd -r -g 999 valkey; \
+	useradd -r -g valkey -u 999 valkey
+
+# runtime dependencies
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
+		tzdata \
+		libssl3 \
+	; \
+	rm -rf /var/lib/apt/lists/*
+
+# Install valkey built earlier
+COPY --from=build /usr/local /usr/local
+RUN mkdir /data && \
+	chown valkey:valkey /data && \
+	valkey-cli --version && \
+	valkey-server --version
 VOLUME /data
 WORKDIR /data
 

@@ -4,30 +4,18 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM alpine:3.21
+FROM alpine:3.21 AS base
 
-# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
-RUN set -eux; \
-# alpine already has a gid 999, so we'll use the next id
-	addgroup -S -g 1000 valkey; \
-	adduser -S -G valkey -u 999 valkey
-
-# runtime dependencies
-RUN set -eux; \
-	apk add --no-cache \
-# add tzdata for https://github.com/docker-library/valkey/issues/138
-		tzdata \
-		# add setpriv for step down from root.
-		setpriv \
-	;
+FROM base AS build
 
 ENV VALKEY_VERSION 8.1.1
-ENV VALKEY_DOWNLOAD_URL https://github.com/valkey-io/valkey/archive/refs/tags/8.1.1.tar.gz
 ENV VALKEY_DOWNLOAD_SHA 3355fbd5458d853ab201d2c046ffca9f078000587ccbe9a6c585110f146ad2c5
+
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.1.1.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
-	apk add --no-cache --virtual .build-deps \
+	apk add --no-cache \
 		coreutils \
 		dpkg-dev dpkg \
 		gcc \
@@ -36,14 +24,8 @@ RUN set -eux; \
 		make \
 		musl-dev \
 		openssl-dev \
-# install real "wget" to avoid:
-#   + wget -O valkey.tar.gz https://download.valkey.io/releases/valkey-6.0.6.tar.gz
-#   Connecting to download.valkey.io (45.60.121.1:80)
-#   wget: bad header line:     XxhODalH: btu; path=/; Max-Age=900
-		wget \
 	; \
 	\
-	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
 			echo "$VALKEY_DOWNLOAD_SHA *valkey.tar.gz" | sha256sum -c -; \
 		\
 	mkdir -p /usr/src/valkey; \
@@ -88,23 +70,32 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	rm -r /usr/src/valkey; \
-	\
-	runDeps="$( \
-		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local \
-			| tr ',' '\n' \
-			| sort -u \
-			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
-	)"; \
-	apk add --no-network --virtual .valkey-rundeps $runDeps; \
-	apk del --no-network .build-deps; \
-	\
-	valkey-cli --version; \
-	valkey-server --version; \
-	\
 	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.1.1","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.1.1?os_name=alpine&os_version=3.21"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
-RUN mkdir /data && chown valkey:valkey /data
+FROM base
+
+# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
+RUN set -eux; \
+# alpine already has a gid 999, so we'll use the next id
+	addgroup -S -g 1000 valkey; \
+	adduser -S -G valkey -u 999 valkey
+
+# runtime dependencies
+RUN set -eux; \
+	apk add --no-cache \
+# add tzdata for https://github.com/docker-library/valkey/issues/138
+		tzdata \
+		# add setpriv for step down from root.
+		setpriv \
+		openssl \
+	;
+
+# Install valkey built earlier
+COPY --from=build /usr/local /usr/local
+RUN mkdir /data && \
+	chown valkey:valkey /data && \
+	valkey-cli --version && \
+	valkey-server --version
 VOLUME /data
 WORKDIR /data
 

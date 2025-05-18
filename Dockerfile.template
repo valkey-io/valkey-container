@@ -1,49 +1,21 @@
 {{ include ".template-helper-functions" -}}
 {{ if env.variant == "alpine" then ( -}}
-FROM alpine:{{ .alpine.version }}
+FROM alpine:{{ .alpine.version }} AS base
 {{ ) else ( -}}
-FROM debian:{{ .debian.version }}-slim
+FROM debian:{{ .debian.version }}-slim AS base
 {{ ) end -}}
 
-# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
-{{ if env.variant == "alpine" then ( -}}
-RUN set -eux; \
-# alpine already has a gid 999, so we'll use the next id
-	addgroup -S -g 1000 valkey; \
-	adduser -S -G valkey -u 999 valkey
-{{ ) else ( -}}
-RUN set -eux; \
-	groupadd -r -g 999 valkey; \
-	useradd -r -g valkey -u 999 valkey
-{{ ) end -}}
-
-# runtime dependencies
-{{ if env.variant == "alpine" then ( -}}
-RUN set -eux; \
-	apk add --no-cache \
-# add tzdata for https://github.com/docker-library/valkey/issues/138
-		tzdata \
-		# add setpriv for step down from root.
-		setpriv \
-	;
-{{ ) else ( -}}
-RUN set -eux; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
-		tzdata \
-	; \
-	rm -rf /var/lib/apt/lists/*
-{{ ) end -}}
+FROM base AS build
 
 ENV VALKEY_VERSION {{ .version }}
-ENV VALKEY_DOWNLOAD_URL {{ .url }}
 ENV VALKEY_DOWNLOAD_SHA {{ .sha256 // error("no sha256 for \(.version) (\(env.version))") }}
+
+ADD "{{ .url }}" /valkey.tar.gz
 
 RUN set -eux; \
 	\
 {{ if env.variant == "alpine" then ( -}}
-	apk add --no-cache --virtual .build-deps \
+	apk add --no-cache \
 		coreutils \
 		dpkg-dev dpkg \
 		gcc \
@@ -52,19 +24,10 @@ RUN set -eux; \
 		make \
 		musl-dev \
 		openssl-dev \
-# install real "wget" to avoid:
-#   + wget -O valkey.tar.gz https://download.valkey.io/releases/valkey-6.0.6.tar.gz
-#   Connecting to download.valkey.io (45.60.121.1:80)
-#   wget: bad header line:     XxhODalH: btu; path=/; Max-Age=900
-		wget \
 	; \
 {{ ) else ( -}}
-	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
-		ca-certificates \
-		wget \
-		\
 		dpkg-dev \
 		gcc \
 		libc6-dev \
@@ -74,7 +37,6 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*; \
 {{ ) end -}}
 	\
-	wget -O valkey.tar.gz "$VALKEY_DOWNLOAD_URL"; \
 	{{ if .version == "unstable" then ( -}}
 		echo "Unstable Valkey version, do not compare SHA256SUM" ;\
 	{{ ) else ( -}}
@@ -142,34 +104,6 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	rm -r /usr/src/valkey; \
-	\
-{{ if env.variant == "alpine" then ( -}}
-	runDeps="$( \
-		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local \
-			| tr ',' '\n' \
-			| sort -u \
-			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
-	)"; \
-	apk add --no-network --virtual .valkey-rundeps $runDeps; \
-	apk del --no-network .build-deps; \
-{{ ) else ( -}}
-	apt-mark auto '.*' > /dev/null; \
-	[ -z "$savedAptMark" ] || apt-mark manual $savedAptMark > /dev/null; \
-	find /usr/local -type f -executable -exec ldd '{}' ';' \
-		| awk '/=>/ { so = $(NF-1); if (index(so, "/usr/local/") == 1) { next }; gsub("^/(usr/)?", "", so); print so }' \
-		| sort -u \
-		| xargs -r dpkg-query --search \
-		| cut -d: -f1 \
-		| sort -u \
-		| xargs -r apt-mark manual \
-	; \
-	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
-{{ ) end -}}
-	\
-	valkey-cli --version; \
-	valkey-server --version; \
-	\
 	echo {{
 		{
 			name: "valkey-server",
@@ -193,7 +127,47 @@ RUN set -eux; \
 		} | sbom | tostring | @sh
 	}} > /usr/local/valkey.spdx.json
 
-RUN mkdir /data && chown valkey:valkey /data
+FROM base
+
+# add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
+{{ if env.variant == "alpine" then ( -}}
+RUN set -eux; \
+# alpine already has a gid 999, so we'll use the next id
+	addgroup -S -g 1000 valkey; \
+	adduser -S -G valkey -u 999 valkey
+{{ ) else ( -}}
+RUN set -eux; \
+	groupadd -r -g 999 valkey; \
+	useradd -r -g valkey -u 999 valkey
+{{ ) end -}}
+
+# runtime dependencies
+{{ if env.variant == "alpine" then ( -}}
+RUN set -eux; \
+	apk add --no-cache \
+# add tzdata for https://github.com/docker-library/valkey/issues/138
+		tzdata \
+		# add setpriv for step down from root.
+		setpriv \
+		openssl \
+	;
+{{ ) else ( -}}
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
+		tzdata \
+		libssl3 \
+	; \
+	rm -rf /var/lib/apt/lists/*
+{{ ) end -}}
+
+# Install valkey built earlier
+COPY --from=build /usr/local /usr/local
+RUN mkdir /data && \
+	chown valkey:valkey /data && \
+	valkey-cli --version && \
+	valkey-server --version
 VOLUME /data
 WORKDIR /data
 
