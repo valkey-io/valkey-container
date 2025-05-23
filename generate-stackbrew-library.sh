@@ -32,6 +32,10 @@ dirCommit() {
 			$(git show HEAD:./Dockerfile | awk '
 				toupper($1) == "COPY" {
 					for (i = 2; i < NF; i++) {
+						if ($i ~ /^--from=/) {
+							next
+						}
+
 						print $i
 					}
 				}
@@ -45,7 +49,7 @@ getArches() {
 
 	eval "declare -g -A parentRepoToArches=( $(
 		find -name 'Dockerfile' -exec awk '
-				toupper($1) == "FROM" && $2 !~ /^('"$repo"'|scratch|.*\/.*)(:|$)/ {
+				toupper($1) == "FROM" && index($2, ":") > 0 && index($2, "'"$repo"'") == 0 {
 					print "'"$officialImagesUrl"'" $2
 				}
 			' '{}' + \
@@ -97,7 +101,7 @@ for version; do
 			variantAliases=( "${variantAliases[@]//latest-/}" )
 		fi
 
-		parent="$(awk 'toupper($1) == "FROM" { print $2 }' "$dir/Dockerfile")"
+		parent="$(awk 'toupper($1) == "FROM" && index($2, ":") > 0 { print $2 }' "$dir/Dockerfile")"
 		arches="${parentRepoToArches[$parent]}"
 
 		suite="${parent#*:}" # "bookworm-slim", "bookworm"
