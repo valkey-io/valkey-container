@@ -87,6 +87,7 @@ RUN set -eux; \
 		# add setpriv for step down from root.
 		setpriv \
 		openssl \
+		libgcc \
 	;
 
 # Install valkey built earlier
