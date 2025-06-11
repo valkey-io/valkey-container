@@ -8,7 +8,6 @@ FROM debian:bookworm-slim AS base
 
 FROM base AS build
 
-ENV VALKEY_VERSION unstable
 ENV VALKEY_DOWNLOAD_SHA 0000000000000000000000000000000000000000000000000000000000000000
 
 ADD "https://github.com/valkey-io/valkey/archive/unstable.tar.gz" /valkey.tar.gz
@@ -77,6 +76,8 @@ RUN set -eux; \
 	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"unstable","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@unstable?os_name=debian&os_version=bookworm"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 FROM base
+
+ENV VALKEY_VERSION unstable
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN set -eux; \

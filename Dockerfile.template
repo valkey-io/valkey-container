@@ -7,7 +7,6 @@ FROM debian:{{ .debian.version }}-slim AS base
 
 FROM base AS build
 
-ENV VALKEY_VERSION {{ .version }}
 ENV VALKEY_DOWNLOAD_SHA {{ .sha256 // error("no sha256 for \(.version) (\(env.version))") }}
 
 ADD "{{ .url }}" /valkey.tar.gz
@@ -134,6 +133,8 @@ RUN set -eux; \
 	}} > /usr/local/valkey.spdx.json
 
 FROM base
+
+ENV VALKEY_VERSION {{ .version }}
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 {{ if env.variant == "alpine" then ( -}}

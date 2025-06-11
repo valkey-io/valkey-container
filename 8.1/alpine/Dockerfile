@@ -8,7 +8,6 @@ FROM alpine:3.21 AS base
 
 FROM base AS build
 
-ENV VALKEY_VERSION 8.1.1
 ENV VALKEY_DOWNLOAD_SHA 3355fbd5458d853ab201d2c046ffca9f078000587ccbe9a6c585110f146ad2c5
 
 ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.1.1.tar.gz" /valkey.tar.gz
@@ -74,6 +73,8 @@ RUN set -eux; \
 	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.1.1","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.1.1?os_name=alpine&os_version=3.21"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 FROM base
+
+ENV VALKEY_VERSION 8.1.1
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN set -eux; \
