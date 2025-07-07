@@ -12,8 +12,8 @@ Last updated: 2025-07-07
 # Supported tags and respective `Dockerfile` links
 
 ## Official releases
-- [`8.1.2`, `8.1`, `8`, `latest`, `8.1.2-bookworm`, `8.1-bookworm`, `8-bookworm`, `bookworm`](https://github.com/valkey-io/valkey-container/blob/master/8.1/debian/Dockerfile)
-- [`8.1.2-alpine`, `8.1-alpine`, `8-alpine`, `alpine`, `8.1.2-alpine3.22`, `8.1-alpine3.22`, `8-alpine3.22`, `alpine3.22`](https://github.com/valkey-io/valkey-container/blob/master/8.1/alpine/Dockerfile)
+- [`8.1.3`, `8.1`, `8`, `latest`, `8.1.3-bookworm`, `8.1-bookworm`, `8-bookworm`, `bookworm`](https://github.com/valkey-io/valkey-container/blob/master/8.1/debian/Dockerfile)
+- [`8.1.3-alpine`, `8.1-alpine`, `8-alpine`, `alpine`, `8.1.3-alpine3.22`, `8.1-alpine3.22`, `8-alpine3.22`, `alpine3.22`](https://github.com/valkey-io/valkey-container/blob/master/8.1/alpine/Dockerfile)
 - [`8.0.4`, `8.0`, `8.0.4-bookworm`, `8.0-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/8.0/debian/Dockerfile)
 - [`8.0.4-alpine`, `8.0-alpine`, `8.0.4-alpine3.22`, `8.0-alpine3.22`](https://github.com/valkey-io/valkey-container/blob/master/8.0/alpine/Dockerfile)
 - [`7.2.9`, `7.2`, `7`, `7.2.9-bookworm`, `7.2-bookworm`, `7-bookworm`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
