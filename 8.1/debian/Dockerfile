@@ -91,6 +91,8 @@ RUN set -eux; \
 # add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
 		tzdata \
 		libssl3 \
+# add ssl-cert for snakeoil certificates (Debian)
+		ssl-cert \
 	; \
 	rm -rf /var/lib/apt/lists/*
 

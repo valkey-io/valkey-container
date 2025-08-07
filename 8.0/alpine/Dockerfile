@@ -92,6 +92,11 @@ RUN set -eux; \
 		libgcc \
 	;
 
+# Add make-ssl-cert script for snakeoil certificates (Alpine)
+RUN set -eux; \
+	printf '#!/bin/sh\nset -e\nopenssl req -new -x509 -days 3650 -nodes -out "$1" -keyout "$2" -subj "/CN=localhost"\n' > /usr/local/bin/make-ssl-cert; \
+	chmod +x /usr/local/bin/make-ssl-cert
+
 # Install valkey built earlier
 COPY --from=build /usr/local /usr/local
 RUN mkdir /data && \
