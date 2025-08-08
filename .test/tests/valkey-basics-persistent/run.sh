@@ -13,6 +13,13 @@ cid="$(docker run -d --name "$cname" --network "$network" "$image")"
 
 trap "docker rm -vf '$cid' >/dev/null; docker network rm '$network' >/dev/null" EXIT
 
+# Verify /data is not configured as a Docker volume
+volumes="$(docker inspect "$cname" --format '{{range .Mounts}}{{.Destination}} {{end}}')"
+if echo "$volumes" | grep -q "/data"; then
+  echo >&2 "ERROR: /data should not be a volume mount point"
+  exit 1
+fi
+
 valkey-cli() {
   docker run --rm -i \
     --network "$network" \
