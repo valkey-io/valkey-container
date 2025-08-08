@@ -54,7 +54,7 @@ else
     echo "Testing Debian make-ssl-cert..."
     
     # Test standard generation
-    docker exec "$cid" make-ssl-cert generate-default-snakeoil
+    docker exec "$cid" env DEBIAN_FRONTEND=noninteractive make-ssl-cert generate-default-snakeoil
     
     # Verify files exist
     docker exec "$cid" test -f /etc/ssl/certs/ssl-cert-snakeoil.pem
