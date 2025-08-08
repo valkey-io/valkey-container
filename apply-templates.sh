@@ -53,5 +53,8 @@ for version; do
 		} > "$dir/Dockerfile"
 
 		cp -a docker-entrypoint.sh "$dir/"
+		if [ "$variant" = "alpine" ]; then
+			cp -a make-ssl-cert-alpine.sh "$dir/"
+		fi
 	done
 done
