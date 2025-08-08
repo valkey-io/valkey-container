@@ -161,9 +161,8 @@ RUN set -eux; \
 	;
 
 # Add make-ssl-cert script for snakeoil certificates (Alpine)
-RUN set -eux; \
-	printf '#!/bin/sh\nset -e\nif [ $# -ne 2 ]; then\n  echo "Usage: make-ssl-cert <cert_file> <key_file>" >&2\n  exit 1\nfi\nmkdir -p "$(dirname "$1")" "$(dirname "$2")"\nopenssl req -new -x509 -days 3650 -nodes -out "$1" -keyout "$2" -subj "/CN=localhost"\n' > /usr/local/bin/make-ssl-cert; \
-	chmod +x /usr/local/bin/make-ssl-cert
+COPY make-ssl-cert-alpine.sh /usr/local/bin/make-ssl-cert
+RUN chmod +x /usr/local/bin/make-ssl-cert
 {{ ) else ( -}}
 RUN set -eux; \
 	apt-get update; \
