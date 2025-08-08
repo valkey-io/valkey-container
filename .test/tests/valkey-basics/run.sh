@@ -69,5 +69,9 @@ valkey-cli() {
 
 . "$dir/../../retry.sh" --tries 20 '[ "$(valkey-cli ping)" = "PONG" ]'
 
+# Test /run/valkey directory exists and has correct ownership
+docker exec "$cid" test -d /run/valkey
+docker exec "$cid" sh -c '[ "$(stat -c "%U:%G" /run/valkey)" = "valkey:valkey" ]'
+
 [ "$(valkey-cli set mykey somevalue)" = "OK" ]
 [ "$(valkey-cli get mykey)" = "somevalue" ]
