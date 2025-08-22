@@ -11,11 +11,11 @@
     }
   },
   "8.0": {
-    "version": "8.0.4",
-    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.4.tar.gz",
-    "sha256": "55c12a25f67ef19b615c76b6cb0c92d12753d76eb8d38b31d30e299c3490cdf2",
+    "version": "8.0.5",
+    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.5.tar.gz",
+    "sha256": "214173cfb3236b87a781d75e290339a2e05c6e8fc10fc969fac0809dd8bc695f",
     "debian": {
-      "version": "bookworm"
+      "version": "trixie"
     },
     "alpine": {
       "version": "3.22"
