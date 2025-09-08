@@ -8,14 +8,9 @@ on:
 
 env:
   PUBLISH_IMAGE: |
-    if ( ${{ secrets.DOCKERHUB_USERNAME != '' }} &&     # Check if DockerHub username exists
-        ${{ secrets.DOCKERHUB_TOKEN != '' }} &&         # Check if DockerHub token exists
-        ${{ github.ref == 'refs/heads/mainline' }} )    # Check if on mainline branch
-    then
-      echo "true"    # Output "true" if all conditions are met
-    else
-      echo "false"   # Output "false" if any condition fails
-    fi
+    ${{ secrets.DOCKERHUB_USERNAME != '' &&
+    secrets.DOCKERHUB_TOKEN != '' &&
+    github.ref == 'refs/heads/mainline' }}
 
 defaults:
   run:
