@@ -31,6 +31,7 @@ jobs:
             fi
             if echo $changed_files | grep -qE "^(versions\.json|[0-9]+\.[0-9]+/|unstable/)"; then
               changed_versions=$(echo $changed_files | grep -oE "[0-9]+\.[0-9]+|unstable" | sort -u | tr '\n' '|' | sed 's/|$//')
+            fi
           ./apply-templates.sh $changed_versions
       - name: Check Git Status
         run: |
