@@ -84,7 +84,7 @@ RUN set -eux; \
 # runtime dependencies
 RUN set -eux; \
 	apk add --no-cache \
-# add tzdata for https://github.com/docker-library/valkey/issues/138
+# add tzdata for https://github.com/docker-library/redis/issues/138
 		tzdata \
 		# add setpriv for step down from root.
 		setpriv \
@@ -96,6 +96,8 @@ RUN set -eux; \
 COPY --from=build /usr/local /usr/local
 RUN mkdir /data && \
 	chown valkey:valkey /data && \
+	mkdir -p /run/valkey && \
+	chown valkey:valkey /run/valkey && \
 	valkey-cli --version && \
 	valkey-server --version
 VOLUME /data
