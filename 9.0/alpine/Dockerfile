@@ -4,26 +4,26 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM debian:trixie-slim AS base
+FROM alpine:3.22 AS base
 
 FROM base AS build
 
-ENV VALKEY_DOWNLOAD_SHA 214173cfb3236b87a781d75e290339a2e05c6e8fc10fc969fac0809dd8bc695f
+ENV VALKEY_DOWNLOAD_SHA b9a61d3e2b1e7a4c51e1e32c63e342a676b0b8ebbaf79b0d789be9f9ca1c7b67
 
-ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.5.tar.gz" /valkey.tar.gz
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.0.0-rc1.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-		dpkg-dev \
+	apk add --no-cache \
+		coreutils \
+		dpkg-dev dpkg \
 		gcc \
-		libc6-dev \
-		libssl-dev \
-		libsystemd-dev \
+		g++ \
+		linux-headers \
 		make \
+		musl-dev \
+		openssl-dev \
 	; \
-	rm -rf /var/lib/apt/lists/*; \
 	\
 			echo "$VALKEY_DOWNLOAD_SHA *valkey.tar.gz" | sha256sum -c -; \
 		\
@@ -54,8 +54,9 @@ RUN set -eux; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
-	export BUILD_TLS=yes; \
-	export USE_SYSTEMD=yes; \
+	echo "Version 9.0.0-rc1 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
+			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+	\
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
 	\
@@ -69,33 +70,33 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.0.5","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.0.5?os_name=debian&os_version=trixie"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"9.0.0-rc1","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.0.0-rc1?os_name=alpine&os_version=3.22"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 FROM base
 
-ENV VALKEY_VERSION 8.0.5
+ENV VALKEY_VERSION 9.0.0-rc1
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN set -eux; \
-	groupadd -r -g 999 valkey; \
-	useradd -r -g valkey -u 999 valkey
+# alpine already has a gid 999, so we'll use the next id
+	addgroup -S -g 1000 valkey; \
+	adduser -S -G valkey -u 999 valkey
 
 # runtime dependencies
 RUN set -eux; \
-	apt-get update; \
-	apt-get install -y --no-install-recommends \
-# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
+	apk add --no-cache \
+# add tzdata for https://github.com/docker-library/valkey/issues/138
 		tzdata \
-		libssl3t64 \
-	; \
-	rm -rf /var/lib/apt/lists/*
+		# add setpriv for step down from root.
+		setpriv \
+		openssl \
+		libgcc \
+	;
 
 # Install valkey built earlier
 COPY --from=build /usr/local /usr/local
 RUN mkdir /data && \
 	chown valkey:valkey /data && \
-	mkdir -p /run/valkey && \
-	chown valkey:valkey /run/valkey && \
 	valkey-cli --version && \
 	valkey-server --version
 VOLUME /data
