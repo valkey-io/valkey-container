@@ -29,12 +29,14 @@ jobs:
           else
             changed_files=$(git diff --name-only HEAD~1 HEAD)
           fi
-          # Filter for Dockerfile changes and extract directory names
-          changed_versions=$(echo "$changed_files" | grep 'Dockerfile$' | sed 's|/[^/]*$||' | grep -oE '^([0-9]+\.[0-9]+|unstable)' | sort -u | tr '\n' ' ' | sed 's/ $//')
 
-          if [[ -n "$changed_versions" ]]; then
-              ./apply-templates.sh "$changed_versions"
+          # Create an array of changed versions
+          readarray -t versions < <(echo "$changed_files" | grep 'Dockerfile$' | sed 's|/[^/]*$||' | grep -oE '^([0-9]+\.[0-9]+|unstable)' | sort -u)
+
+          if [[ ${#versions[@]} -gt 0 ]]; then
+            ./apply-templates.sh "${versions[@]}"
           fi
+
       - name: Check Git Status
         run: |
           echo "==== GIT STATUS BEGIN ===="
