@@ -5,6 +5,12 @@ on:
   push:
   schedule:
     - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build and push (ex: 9.0.0 or unstable)'
+        required: true
+        type: string
 
 env:
   PUBLISH_IMAGE: |
@@ -40,6 +46,10 @@ jobs:
           # If triggered by a cron event, filter publish_strategy to include `unstable` and `unstable-alpine`
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
             publish_strategy=$(jq -c '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name =="unstable" or .name== "unstable-alpine")]}}' <<<"$publish_strategy")
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # If triggered by a workflow dispatch, build only the specified version
+            version="${{ github.event.inputs.version }}"
+            publish_strategy=$(jq -c --arg version "$version" '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name | test($version))]}}' <<<"$publish_strategy")
           elif [[ ("${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/mainline") || ("${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "mainline") ]]; then
             # For pushes to mainline or PRs targeting mainline, only build changed versions
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -89,7 +99,7 @@ jobs:
 
   build_and_push:
     if: |
-      ((github.event_name == 'push' || github.event_name == 'schedule') &&
+      ((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/mainline' &&
       fromJson(needs.generate-jobs.outputs.publish_strategy).matrix.include[0])
     needs:
