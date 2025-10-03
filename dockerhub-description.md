@@ -14,8 +14,8 @@ Last updated: 2025-10-03
 ## Official releases
 - [`8.1.4`, `8.1`, `8`, `latest`, `8.1.4-trixie`, `8.1-trixie`, `8-trixie`, `trixie`](https://github.com/valkey-io/valkey-container/blob/master/8.1/debian/Dockerfile)
 - [`8.1.4-alpine`, `8.1-alpine`, `8-alpine`, `alpine`, `8.1.4-alpine3.22`, `8.1-alpine3.22`, `8-alpine3.22`, `alpine3.22`](https://github.com/valkey-io/valkey-container/blob/master/8.1/alpine/Dockerfile)
-- [`8.0.5`, `8.0`, `8.0.5-trixie`, `8.0-trixie`](https://github.com/valkey-io/valkey-container/blob/master/8.0/debian/Dockerfile)
-- [`8.0.5-alpine`, `8.0-alpine`, `8.0.5-alpine3.22`, `8.0-alpine3.22`](https://github.com/valkey-io/valkey-container/blob/master/8.0/alpine/Dockerfile)
+- [`8.0.6`, `8.0`, `8.0.6-trixie`, `8.0-trixie`](https://github.com/valkey-io/valkey-container/blob/master/8.0/debian/Dockerfile)
+- [`8.0.6-alpine`, `8.0-alpine`, `8.0.6-alpine3.22`, `8.0-alpine3.22`](https://github.com/valkey-io/valkey-container/blob/master/8.0/alpine/Dockerfile)
 - [`7.2.11`, `7.2`, `7`, `7.2.11-trixie`, `7.2-trixie`, `7-trixie`](https://github.com/valkey-io/valkey-container/blob/master/7.2/debian/Dockerfile)
 - [`7.2.11-alpine`, `7.2-alpine`, `7-alpine`, `7.2.11-alpine3.22`, `7.2-alpine3.22`, `7-alpine3.22`](https://github.com/valkey-io/valkey-container/blob/master/7.2/alpine/Dockerfile)
 ## Release candidates
