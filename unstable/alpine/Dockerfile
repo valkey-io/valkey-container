@@ -76,6 +76,8 @@ FROM base
 
 ENV VALKEY_VERSION unstable
 
+LABEL org.opencontainers.image.source="https://github.com/valkey-io/valkey"
+
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN set -eux; \
 # alpine already has a gid 999, so we'll use the next id
