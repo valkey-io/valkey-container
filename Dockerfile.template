@@ -152,7 +152,7 @@ RUN set -eux; \
 {{ if env.variant == "alpine" then ( -}}
 RUN set -eux; \
 	apk add --no-cache \
-# add tzdata for https://github.com/docker-library/valkey/issues/138
+# add tzdata for https://github.com/docker-library/redis/issues/138
 		tzdata \
 		# add setpriv for step down from root.
 		setpriv \
@@ -163,9 +163,9 @@ RUN set -eux; \
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
-# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
+# add tzdata explicitly for https://github.com/docker-library/redis/issues/138 (see also https://bugs.debian.org/837060 and related)
 		tzdata \
-		libssl3 \
+		{{ if .debian.version != "bookworm" then "libssl3t64" else "libssl3" end }} \
 	; \
 	rm -rf /var/lib/apt/lists/*
 {{ ) end -}}
@@ -174,6 +174,8 @@ RUN set -eux; \
 COPY --from=build /usr/local /usr/local
 RUN mkdir /data && \
 	chown valkey:valkey /data && \
+	mkdir -p /run/valkey && \
+	chown valkey:valkey /run/valkey && \
 	valkey-cli --version && \
 	valkey-server --version
 WORKDIR /data

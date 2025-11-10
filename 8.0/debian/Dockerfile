@@ -4,13 +4,13 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM debian:bookworm-slim AS base
+FROM debian:trixie-slim AS base
 
 FROM base AS build
 
-ENV VALKEY_DOWNLOAD_SHA 55c12a25f67ef19b615c76b6cb0c92d12753d76eb8d38b31d30e299c3490cdf2
+ENV VALKEY_DOWNLOAD_SHA f8d15c257a3619e0e42e68998e9dc16536009d257662efa4c62ef7d08a71b0dd
 
-ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.4.tar.gz" /valkey.tar.gz
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.6.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
@@ -69,11 +69,11 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.0.4","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.0.4?os_name=debian&os_version=bookworm"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.0.6","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.0.6?os_name=debian&os_version=trixie"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 FROM base
 
-ENV VALKEY_VERSION 8.0.4
+ENV VALKEY_VERSION 8.0.6
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN set -eux; \
@@ -84,9 +84,9 @@ RUN set -eux; \
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
-# add tzdata explicitly for https://github.com/docker-library/valkey/issues/138 (see also https://bugs.debian.org/837060 and related)
+# add tzdata explicitly for https://github.com/docker-library/redis/issues/138 (see also https://bugs.debian.org/837060 and related)
 		tzdata \
-		libssl3 \
+		libssl3t64 \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
@@ -94,6 +94,8 @@ RUN set -eux; \
 COPY --from=build /usr/local /usr/local
 RUN mkdir /data && \
 	chown valkey:valkey /data && \
+	mkdir -p /run/valkey && \
+	chown valkey:valkey /run/valkey && \
 	valkey-cli --version && \
 	valkey-server --version
 WORKDIR /data
