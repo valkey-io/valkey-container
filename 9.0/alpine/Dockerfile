@@ -101,7 +101,6 @@ RUN mkdir /data && \
 	chown valkey:valkey /run/valkey && \
 	valkey-cli --version && \
 	valkey-server --version
-VOLUME /data
 WORKDIR /data
 
 COPY docker-entrypoint.sh /usr/local/bin/
