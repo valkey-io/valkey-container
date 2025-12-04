@@ -13,10 +13,7 @@ on:
         type: string
 
 env:
-  PUBLISH_IMAGE: |
-    ${{ secrets.DOCKERHUB_USERNAME != '' &&
-    secrets.DOCKERHUB_TOKEN != '' &&
-    github.ref == 'refs/heads/mainline' }}
+  PUBLISH_IMAGE: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' && secrets.AWS_ROLE_TO_ASSUME != '' && github.ref == 'refs/heads/mainline' }}
 
 defaults:
   run:
@@ -34,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      - uses: docker-library/bashbrew@v0.1.12
+      - uses: docker-library/bashbrew@v0.1.13
       - id: generate-jobs
         name: Generate Jobs
         run: |
@@ -59,7 +56,7 @@ jobs:
             else
               changed_files=$(git diff --name-only HEAD~1 HEAD)
             fi
-            if echo $changed_files | grep -qE "^(versions\.json|[0-9]+\.[0-9]+/|unstable/)"; then
+            if printf "%s\n" "$changed_files" | grep -qE "^(versions\.json|[0-9]+\.[0-9]+/|unstable/)"; then
               changed_versions=$(echo $changed_files | grep -oE "[0-9]+\.[0-9]+|unstable" | sort -u | tr '\n' '|' | sed 's/|$//')
               if [[ -n "$changed_versions" ]]; then
                 publish_strategy=$(jq -c --arg versions "$changed_versions" '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.meta.entries[0].directory | test($versions))]}}' <<<"$publish_strategy")
@@ -109,6 +106,7 @@ jobs:
     name: ${{ matrix.name }} - Build and push
     runs-on: ${{ matrix.os }}
     permissions:
+      id-token: write
       contents: read
       packages: write
     steps:
@@ -121,8 +119,10 @@ jobs:
           original_tags="${{ toJson(matrix.meta.entries[0].tags) }}"
           docker_hub_tags=$(echo $original_tags | sed 's/valkey-container/${{ secrets.DOCKERHUB_ACCOUNT }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
           ghcr_tags=$(echo $original_tags | sed 's/valkey-container/ghcr.io\/${{ github.repository_owner }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+          ecr_tags=$(echo $original_tags | sed 's/valkey-container/public.ecr.aws\/${{ secrets.ECR_REGISTRY_ALIAS }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
           echo "docker_hub_tags=$docker_hub_tags" >> $GITHUB_OUTPUT
           echo "ghcr_tags=$ghcr_tags" >> $GITHUB_OUTPUT
+          echo "ecr_tags=$ecr_tags" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -139,7 +139,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
-      # We would not log in anywhere where we are not pushing 
+        # Don't log in if we are not pushing changes
         if: env.PUBLISH_IMAGE
         uses: docker/login-action@v3
         with:
@@ -147,17 +147,47 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build and push
+      - name: Configure AWS credentials via OIDC
+        if: env.PUBLISH_IMAGE
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR Public Gallery
+        if: env.PUBLISH_IMAGE
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+
+      - name: Build and push to Docker Hub, Github Container Registry, and Amazon ECR
         uses: docker/build-push-action@v5
         with:
           file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
           push: ${{ env.PUBLISH_IMAGE }}
           tags: >-
-            ${{ steps.modify_tags.outputs.docker_hub_tags }},${{ steps.modify_tags.outputs.ghcr_tags }}
+            ${{ steps.modify_tags.outputs.docker_hub_tags }},${{ steps.modify_tags.outputs.ghcr_tags }},${{ steps.modify_tags.outputs.ecr_tags }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           provenance: false
           load: false
 
+  update-ecr-description:
+    if: |
+      (github.event_name == 'push' &&
+      github.ref == 'refs/heads/mainline' &&
+      fromJson(needs.generate-jobs.outputs.publish_strategy).matrix.include[0])
+    needs:
+      - generate-jobs
+      - test
+      - build_and_push
+    name: Update ECR Description
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/update-ecr-description.yml
+    secrets:
+      AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+      ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
+  
   update-dockerhub-description:
     if: |
       (github.event_name == 'push' &&

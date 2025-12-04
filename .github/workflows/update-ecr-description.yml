@@ -1,0 +1,54 @@
+name: Update ECR Public Description
+
+on:
+  workflow_call:
+    secrets:
+      AWS_ROLE_TO_ASSUME:
+        required: true
+      ECR_REPOSITORY_NAME:
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  update-ecr-catalog:
+    runs-on: ubuntu-latest
+    name: Update ECR Public Catalog Data
+    
+    steps:
+    - name: Checkout Valkey Container Repository
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+    - name: Configure AWS credentials via OIDC
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+        aws-region: us-east-1
+
+    - name: Parse markdown file and extract usage/about text
+      run: |
+        python3 create-ecr-description.py dockerhub-description.md
+
+    - name: Update ECR Public catalog data
+      run: |
+        REPO_NAME="${{ secrets.ECR_REPOSITORY_NAME }}"
+        
+        # The ABOUT_JSON and USAGE_JSON variables come from the Python script
+        # that wrote them to $GITHUB_ENV in the previous step
+        cat > catalog-data.json <<EOF
+        {
+          "repositoryName": "$REPO_NAME",
+          "catalogData": {
+            "description": "Auto-updated container image",
+            "aboutText": $ABOUT_JSON,
+            "usageText": $USAGE_JSON,
+            "operatingSystems": ["Linux"]
+          }
+        }
+        EOF
+        
+        aws ecr-public put-repository-catalog-data \
+          --cli-input-json file://catalog-data.json \
+          --region us-east-1
