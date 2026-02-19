@@ -8,12 +8,14 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build and push (ex: 9.0.0 or unstable)'
+        description: 'Versions to build and push, space-separated (ex: "9.0.2" or "9.0.2 8.1.5" or unstable)'
         required: true
         type: string
 
 env:
-  PUBLISH_IMAGE: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' && secrets.AWS_ROLE_TO_ASSUME != '' && github.ref == 'refs/heads/mainline' }}
+  PUBLISH_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' && secrets.DOCKERHUB_ACCOUNT != '' && github.ref == 'refs/heads/mainline' }}
+  PUBLISH_GHCR: ${{ github.repository == 'valkey-io/valkey-container' && github.ref == 'refs/heads/mainline' }}
+  PUBLISH_ECR: ${{ secrets.AWS_ROLE_TO_ASSUME != '' && secrets.ECR_REGISTRY_ALIAS != '' && github.ref == 'refs/heads/mainline' }}
 
 defaults:
   run:
@@ -27,16 +29,20 @@ jobs:
     outputs:
       test_strategy: ${{ steps.generate-jobs.outputs.test_strategy }}
       publish_strategy: ${{ steps.generate-jobs.outputs.publish_strategy }}
-      publish_image: ${{ steps.check-secrets.outputs.publish_image }}
+      publish_dockerhub: ${{ steps.check-secrets.outputs.publish_dockerhub }}
+      publish_ghcr: ${{ steps.check-secrets.outputs.publish_ghcr }}
+      publish_ecr: ${{ steps.check-secrets.outputs.publish_ecr }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
       - uses: docker-library/bashbrew@v0.1.13
       - id: check-secrets
-        name: Output publish_image for update description jobs
+        name: Output publish flags for downstream jobs
         run: |
-          echo "publish_image=$PUBLISH_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "publish_dockerhub=$PUBLISH_DOCKERHUB" >> "$GITHUB_OUTPUT"
+          echo "publish_ghcr=$PUBLISH_GHCR" >> "$GITHUB_OUTPUT"
+          echo "publish_ecr=$PUBLISH_ECR" >> "$GITHUB_OUTPUT"
       - id: generate-jobs
         name: Generate Jobs
         run: |
@@ -49,9 +55,11 @@ jobs:
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
             publish_strategy=$(jq -c '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name =="unstable" or .name== "unstable-alpine")]}}' <<<"$publish_strategy")
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            # If triggered by a workflow dispatch, build only the specified version
-            version="${{ github.event.inputs.version }}"
-            publish_strategy=$(jq -c --arg version "$version" '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name | test($version))]}}' <<<"$publish_strategy")
+            # If triggered by a workflow dispatch, build only the specified version(s)
+            # Space-separated version (e.g. "9.0.2 8.1.5 unstable")
+            version_input="${{ github.event.inputs.version }}"
+            version_pattern=$(echo "$version_input" | xargs | tr ' ' '|')
+            publish_strategy=$(jq -c --arg version "$version_pattern" '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name | test($version))]}}' <<<"$publish_strategy")
           elif [[ ("${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/mainline") || ("${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "mainline") ]]; then
             # For pushes to mainline or PRs targeting mainline, only build changed versions
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -103,7 +111,8 @@ jobs:
     if: |
       ((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/mainline' &&
-      fromJson(needs.generate-jobs.outputs.publish_strategy).matrix.include[0])
+      fromJson(needs.generate-jobs.outputs.publish_strategy).matrix.include[0] &&
+      (needs.generate-jobs.outputs.publish_dockerhub == 'true' || needs.generate-jobs.outputs.publish_ghcr == 'true' || needs.generate-jobs.outputs.publish_ecr == 'true'))
     needs:
       - generate-jobs
       - test
@@ -122,12 +131,24 @@ jobs:
         id: modify_tags
         run: |
           original_tags="${{ toJson(matrix.meta.entries[0].tags) }}"
-          docker_hub_tags=$(echo $original_tags | sed 's/valkey-container/${{ secrets.DOCKERHUB_ACCOUNT }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
-          ghcr_tags=$(echo $original_tags | sed 's/valkey-container/ghcr.io\/${{ github.repository_owner }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
-          ecr_tags=$(echo $original_tags | sed 's/valkey-container/public.ecr.aws\/${{ secrets.ECR_REGISTRY_ALIAS }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
-          echo "docker_hub_tags=$docker_hub_tags" >> $GITHUB_OUTPUT
-          echo "ghcr_tags=$ghcr_tags" >> $GITHUB_OUTPUT
-          echo "ecr_tags=$ecr_tags" >> $GITHUB_OUTPUT
+          all_tags=""
+
+          if [[ "$PUBLISH_DOCKERHUB" == "true" ]]; then
+            docker_hub_tags=$(echo $original_tags | sed 's/valkey-container/${{ secrets.DOCKERHUB_ACCOUNT }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+            all_tags="$docker_hub_tags"
+          fi
+
+          if [[ "$PUBLISH_GHCR" == "true" ]]; then
+            ghcr_tags=$(echo $original_tags | sed 's/valkey-container/ghcr.io\/${{ github.repository_owner }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+            all_tags="${all_tags:+$all_tags,}$ghcr_tags"
+          fi
+
+          if [[ "$PUBLISH_ECR" == "true" ]]; then
+            ecr_tags=$(echo $original_tags | sed 's/valkey-container/public.ecr.aws\/${{ secrets.ECR_REGISTRY_ALIAS }}\/valkey/g'| sed 's/\[ *//; s/ *\]//; s/ //g')
+            all_tags="${all_tags:+$all_tags,}$ecr_tags"
+          fi
+
+          echo "tags=$all_tags" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -136,7 +157,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        if: env.PUBLISH_IMAGE == 'true'
+        if: env.PUBLISH_DOCKERHUB == 'true'
         uses: docker/login-action@v3
         with:
           registry: docker.io
@@ -144,8 +165,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        # Don't log in if we are not pushing changes
-        if: env.PUBLISH_IMAGE == 'true'
+        if: env.PUBLISH_GHCR == 'true'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -153,24 +173,23 @@ jobs:
           password: ${{ github.token }}
 
       - name: Configure AWS credentials via OIDC
-        if: env.PUBLISH_IMAGE == 'true'
+        if: env.PUBLISH_ECR == 'true'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: us-east-1
 
       - name: Login to Amazon ECR Public Gallery
-        if: env.PUBLISH_IMAGE == 'true'
+        if: env.PUBLISH_ECR == 'true'
         run: |
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 
-      - name: Build and push to Docker Hub, Github Container Registry, and Amazon ECR
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
-          push: ${{ env.PUBLISH_IMAGE }}
-          tags: >-
-            ${{ steps.modify_tags.outputs.docker_hub_tags }},${{ steps.modify_tags.outputs.ghcr_tags }},${{ steps.modify_tags.outputs.ecr_tags }}
+          push: ${{ env.PUBLISH_DOCKERHUB == 'true' || env.PUBLISH_GHCR == 'true' || env.PUBLISH_ECR == 'true' }}
+          tags: ${{ steps.modify_tags.outputs.tags }}
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           provenance: false
           load: false
@@ -215,7 +234,7 @@ jobs:
       (github.event_name == 'push' &&
       github.ref == 'refs/heads/mainline' &&
       fromJson(needs.generate-jobs.outputs.publish_strategy).matrix.include[0] && 
-      needs.generate-jobs.outputs.publish_image == 'true')
+      (needs.generate-jobs.outputs.publish_dockerhub == 'true' || needs.generate-jobs.outputs.publish_ecr == 'true'))
     needs:
       - update-dockerhub-ecr-description-file
       - generate-jobs
