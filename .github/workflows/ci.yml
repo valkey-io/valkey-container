@@ -190,7 +190,7 @@ jobs:
           file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
           push: ${{ env.PUBLISH_DOCKERHUB == 'true' || env.PUBLISH_GHCR == 'true' || env.PUBLISH_ECR == 'true' }}
           tags: ${{ steps.modify_tags.outputs.tags }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
           provenance: false
           load: false
 

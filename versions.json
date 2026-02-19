@@ -7,7 +7,7 @@
       "version": "trixie"
     },
     "alpine": {
-      "version": "3.22"
+      "version": "3.23"
     }
   },
   "8.0": {
@@ -18,7 +18,7 @@
       "version": "trixie"
     },
     "alpine": {
-      "version": "3.22"
+      "version": "3.23"
     }
   },
   "8.1": {
@@ -32,21 +32,21 @@
       "version": "3.23"
     }
   },
-  "unstable": {
-    "version": "unstable",
-    "url": "https://github.com/valkey-io/valkey/archive/unstable.tar.gz",
-    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-    "debian": {
-      "version": "bookworm"
-    },
-    "alpine": {
-      "version": "3.21"
-    }
-  },
   "9.0": {
     "version": "9.0.2",
     "url": "https://github.com/valkey-io/valkey/archive/refs/tags/9.0.2.tar.gz",
     "sha256": "0ebaa583659ab784ce19170627032cfab7793a5570b7262775f9dbf77c103ec7",
+    "debian": {
+      "version": "trixie"
+    },
+    "alpine": {
+      "version": "3.23"
+    }
+  },
+  "unstable": {
+    "version": "unstable",
+    "url": "https://github.com/valkey-io/valkey/archive/unstable.tar.gz",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
     "debian": {
       "version": "trixie"
     },
