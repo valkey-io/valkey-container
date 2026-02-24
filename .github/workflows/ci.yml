@@ -13,9 +13,9 @@ on:
         type: string
 
 env:
-  PUBLISH_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' && secrets.DOCKERHUB_ACCOUNT != '' && github.ref == 'refs/heads/mainline' }}
+  PUBLISH_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' && github.ref == 'refs/heads/mainline' }}
   PUBLISH_GHCR: ${{ github.repository == 'valkey-io/valkey-container' && github.ref == 'refs/heads/mainline' }}
-  PUBLISH_ECR: ${{ secrets.AWS_ROLE_TO_ASSUME != '' && secrets.ECR_REGISTRY_ALIAS != '' && github.ref == 'refs/heads/mainline' }}
+  PUBLISH_ECR: ${{ secrets.AWS_ROLE_TO_ASSUME != '' && github.ref == 'refs/heads/mainline' }}
 
 defaults:
   run:
