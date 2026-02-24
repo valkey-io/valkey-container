@@ -8,9 +8,9 @@ FROM debian:trixie-slim AS base
 
 FROM base AS build
 
-ENV VALKEY_DOWNLOAD_SHA f8d15c257a3619e0e42e68998e9dc16536009d257662efa4c62ef7d08a71b0dd
+ENV VALKEY_DOWNLOAD_SHA 6f8ec2c906c72f1d6fad41611396fc077c41931cdb865920c8a6c7bdf58aad5c
 
-ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.6.tar.gz" /valkey.tar.gz
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.0.7.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
@@ -69,11 +69,11 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.0.6","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.0.6?os_name=debian&os_version=trixie"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.0.7","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.0.7?os_name=debian&os_version=trixie"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 FROM base
 
-ENV VALKEY_VERSION 8.0.6
+ENV VALKEY_VERSION 8.0.7
 
 LABEL org.opencontainers.image.source="https://github.com/valkey-io/valkey"
 
