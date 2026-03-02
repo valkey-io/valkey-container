@@ -6,5 +6,6 @@ imageTests+=(
 		valkey-basics-tls
 		valkey-basics-config
 		valkey-basics-persistent
+		valkey-readonly-data
 	'
 )
