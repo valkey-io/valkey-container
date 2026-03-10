@@ -100,8 +100,10 @@ RUN set -eux; \
 COPY --from=build /usr/local /usr/local
 RUN mkdir /data && \
 	chown valkey:valkey /data && \
+	chmod 1777 /data && \
 	mkdir -p /run/valkey && \
 	chown valkey:valkey /run/valkey && \
+	chmod 1777 /run/valkey && \
 	valkey-cli --version && \
 	valkey-server --version
 WORKDIR /data

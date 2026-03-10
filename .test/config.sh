@@ -7,5 +7,6 @@ imageTests+=(
 		valkey-basics-config
 		valkey-basics-persistent
 		valkey-readonly-data
+		valkey-user-flag
 	'
 )
