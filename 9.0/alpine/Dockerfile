@@ -93,6 +93,7 @@ RUN set -eux; \
 		setpriv \
 		openssl \
 		libgcc \
+		zlib=1.3.2-r0 \
 	;
 
 # Install valkey built earlier
