@@ -8,9 +8,9 @@ FROM debian:trixie-slim AS base
 
 FROM base AS build
 
-ENV VALKEY_DOWNLOAD_SHA 14256512098fb768b5877c603a84819f546588f5cafb72caa40283e69f2f327b
+ENV VALKEY_DOWNLOAD_SHA c5635466850dd9f22516b4f696b86cc5786a01c216782d72cbd869dcb7bc603d
 
-ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.0-rc1.tar.gz" /valkey.tar.gz
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.0-rc2.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
@@ -54,7 +54,7 @@ RUN set -eux; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
-	echo "Version 9.1.0-rc1 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
+	echo "Version 9.1.0-rc2 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 			apt-get update; \
 		apt-get install -y --no-install-recommends g++; \
 		rm -rf /var/lib/apt/lists/*; \
@@ -73,11 +73,11 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"9.1.0-rc1","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.1.0-rc1?os_name=debian&os_version=trixie"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"9.1.0-rc2","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.1.0-rc2?os_name=debian&os_version=trixie"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 FROM base
 
-ENV VALKEY_VERSION 9.1.0-rc1
+ENV VALKEY_VERSION 9.1.0-rc2
 
 LABEL org.opencontainers.image.source="https://github.com/valkey-io/valkey"
 
@@ -100,8 +100,10 @@ RUN set -eux; \
 COPY --from=build /usr/local /usr/local
 RUN mkdir /data && \
 	chown valkey:valkey /data && \
+	chmod 1777 /data && \
 	mkdir -p /run/valkey && \
 	chown valkey:valkey /run/valkey && \
+	chmod 1777 /run/valkey && \
 	valkey-cli --version && \
 	valkey-server --version
 WORKDIR /data
