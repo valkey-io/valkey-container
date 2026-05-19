@@ -8,9 +8,9 @@ FROM alpine:3.23 AS base
 
 FROM base AS build
 
-ENV VALKEY_DOWNLOAD_SHA c5635466850dd9f22516b4f696b86cc5786a01c216782d72cbd869dcb7bc603d
+ENV VALKEY_DOWNLOAD_SHA 7789fe1df257774457bafb4c1d56c9f7020c3879a7f5b4234af9030b2bd82dfd
 
-ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.0-rc2.tar.gz" /valkey.tar.gz
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.0.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
@@ -54,7 +54,7 @@ RUN set -eux; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
-	echo "Version 9.1.0-rc2 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
+	echo "Version 9.1.0 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
 	\
 	make -C /usr/src/valkey -j "$(nproc)" all; \
@@ -70,11 +70,11 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"9.1.0-rc2","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.1.0-rc2?os_name=alpine&os_version=3.23"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"9.1.0","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.1.0?os_name=alpine&os_version=3.23"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 FROM base
 
-ENV VALKEY_VERSION 9.1.0-rc2
+ENV VALKEY_VERSION 9.1.0
 
 LABEL org.opencontainers.image.source="https://github.com/valkey-io/valkey"
 
