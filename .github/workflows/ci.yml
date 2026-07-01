@@ -33,10 +33,10 @@ jobs:
       publish_ghcr: ${{ steps.check-secrets.outputs.publish_ghcr }}
       publish_ecr: ${{ steps.check-secrets.outputs.publish_ecr }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 2
-      - uses: docker-library/bashbrew@9eef708e6a0b1b5d8bbda769c766777fe45026eb # v0.1.13
+      - uses: docker-library/bashbrew@a519e31d2ed9cb229ff38ab4488e78bfa09d7a2a # v0.1.14
       - id: check-secrets
         name: Output publish flags for downstream jobs
         run: |
@@ -93,7 +93,7 @@ jobs:
     name: ${{ matrix.name }} - test
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Prepare Environment
         run: ${{ matrix.runs.prepare }}
       - name: Pull Dependencies
@@ -151,14 +151,14 @@ jobs:
           echo "tags=$all_tags" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Login to Docker Hub
         if: env.PUBLISH_DOCKERHUB == 'true'
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -166,7 +166,7 @@ jobs:
 
       - name: Login to GitHub Container Registry
         if: env.PUBLISH_GHCR == 'true'
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -174,7 +174,7 @@ jobs:
 
       - name: Configure AWS credentials via OIDC
         if: env.PUBLISH_ECR == 'true'
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
+        uses: aws-actions/configure-aws-credentials@e7f100cf4c008499ea8adda475de1042d6975c7b # v6.2.0
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: us-east-1
@@ -185,7 +185,7 @@ jobs:
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 
       - name: Build and push
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
           push: ${{ env.PUBLISH_DOCKERHUB == 'true' || env.PUBLISH_GHCR == 'true' || env.PUBLISH_ECR == 'true' }}
@@ -206,7 +206,7 @@ jobs:
     name: Update Description File
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Update Description File
         run: |
             echo '${{ needs.generate-jobs.outputs.test_strategy }}' > bashbrew_output.json   
@@ -221,7 +221,7 @@ jobs:
             done
 
       - name: Upload description files
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: description-files
           path: |
