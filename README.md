@@ -20,3 +20,4 @@ You should build and publish a new Docker Image after a new major, minor or patc
 5. Verify all the tests pass on your fork and that your private Docker Hub repository has been updated.
 6. Publish a PR with these changes. For example: [#8](https://github.com/valkey-io/valkey-container/pull/8)
 7. Once the PR is merged, Sit back, relax and enjoy looking at your creation getting published to the official Docker Hub page.
+Dummy change
