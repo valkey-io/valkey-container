@@ -111,8 +111,6 @@ RUN set -eux; \
 
 # Install valkey built earlier
 COPY --from=build /usr/local /usr/local
-# copy libbacktrace for backtrace support on musl
-COPY --from=build /usr/lib/libbacktrace.so* /usr/lib/
 RUN mkdir /data && \
 	chown valkey:valkey /data && \
 	chmod 1777 /data && \
