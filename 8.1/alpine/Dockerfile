@@ -4,13 +4,13 @@
 # PLEASE DO NOT EDIT IT DIRECTLY.
 #
 
-FROM alpine:3.23 AS base
+FROM alpine:3.24 AS base
 
 FROM base AS build
 
-ENV VALKEY_DOWNLOAD_SHA 0edc455ba7524f0cfa4f73fdc70b91dec6941e893a09bcbdd012470d08043cec
+ENV VALKEY_DOWNLOAD_SHA f7e927534aaeb3a5f4410375c3e6f2f0c1b9257db8bc573e68f9e2dbb11344f4
 
-ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.1.8.tar.gz" /valkey.tar.gz
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/8.1.9.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
@@ -68,7 +68,7 @@ RUN set -eux; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
-	echo "Version 8.1.8 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
+	echo "Version 8.1.9 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
 	export USE_LIBBACKTRACE=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
@@ -84,11 +84,11 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.1.8","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.1.8?os_name=alpine&os_version=3.23"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"8.1.9","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@8.1.9?os_name=alpine&os_version=3.24"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
 
 FROM base
 
-ENV VALKEY_VERSION 8.1.8
+ENV VALKEY_VERSION 8.1.9
 
 LABEL org.opencontainers.image.source="https://github.com/valkey-io/valkey"
 
