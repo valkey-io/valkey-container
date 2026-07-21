@@ -1,13 +1,13 @@
 {
   "7.2": {
-    "version": "7.2.13",
-    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/7.2.13.tar.gz",
-    "sha256": "31f19d42c983749e81e69654a8c45dcdc9dc212c23cf11b7bdc4928b328d50a9",
+    "version": "7.2.14",
+    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/7.2.14.tar.gz",
+    "sha256": "7d79e48e81ab353c4bb397dd576e2a19dec5e985007d37c3d41e4802f0f5e314",
     "debian": {
       "version": "trixie"
     },
     "alpine": {
-      "version": "3.23"
+      "version": "3.24"
     }
   },
   "8.0": {
