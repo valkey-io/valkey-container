@@ -69,7 +69,9 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
-	echo '{"spdxVersion":"SPDX-2.3","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","packages":[{"name":"valkey-server","versionInfo":"7.2.14","SPDXID":"SPDXRef-Package--valkey-server","externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@7.2.14?os_name=debian&os_version=trixie"}],"licenseDeclared":"BSD-3-Clause"}]}' > /usr/local/valkey.spdx.json
+	SPDX_CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+	echo '{"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","documentNamespace":"https://valkey.io/spdxdocs/valkey-server-sbom-7.2.14-@SPDX_CREATED@","creationInfo":{"created":"@SPDX_CREATED@","creators":["Organization: The Valkey Project","Tool: valkey-container"]},"packages":[{"name":"valkey-server","versionInfo":"7.2.14","SPDXID":"SPDXRef-Package--valkey-server","downloadLocation":"https://github.com/valkey-io/valkey/archive/refs/tags/7.2.14.tar.gz","filesAnalyzed":false,"externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@7.2.14?os_name=debian&os_version=trixie"}],"licenseDeclared":"BSD-3-Clause"}]}' \
+		| sed "s|@SPDX_CREATED@|$SPDX_CREATED|g" > /usr/local/valkey.spdx.json
 
 FROM base
 
