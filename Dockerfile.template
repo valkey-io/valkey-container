@@ -1,4 +1,5 @@
 {{ include ".template-helper-functions" -}}
+{{ include "valkey-sbom" -}}
 {{ if env.variant == "alpine" then ( -}}
 FROM alpine:{{ .alpine.version }} AS base
 {{ ) else ( -}}
@@ -123,10 +124,12 @@ RUN set -eux; \
 		-exec ln -svfT 'valkey-server' '{}' ';' \
 	; \
 	\
+	SPDX_CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
 	echo {{
 		{
 			name: "valkey-server",
 			version: .version,
+			downloadLocation: .url,
 			params: (
 				if env.variant == "alpine" then
 					{
@@ -143,8 +146,9 @@ RUN set -eux; \
 			licenses: [
 				"BSD-3-Clause"
 			]
-		} | sbom | tostring | @sh
-	}} > /usr/local/valkey.spdx.json
+		} | valkey_sbom | tostring | @sh
+	}} \
+		| sed "s|@SPDX_CREATED@|$SPDX_CREATED|g" > /usr/local/valkey.spdx.json
 
 FROM base
 
