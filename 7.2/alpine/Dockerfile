@@ -84,7 +84,7 @@ RUN set -eux; \
 	; \
 	\
 	SPDX_CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
-	echo '{"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","documentNamespace":"https://valkey.io/spdxdocs/valkey-server-sbom-7.2.14-@SPDX_CREATED@","creationInfo":{"created":"@SPDX_CREATED@","creators":["Organization: The Valkey Project","Tool: valkey-container"]},"packages":[{"name":"valkey-server","versionInfo":"7.2.14","SPDXID":"SPDXRef-Package--valkey-server","downloadLocation":"https://github.com/valkey-io/valkey/archive/refs/tags/7.2.14.tar.gz","filesAnalyzed":false,"externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@7.2.14?os_name=alpine&os_version=3.24"}],"licenseDeclared":"BSD-3-Clause"}]}' \
+	echo '{"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","documentNamespace":"https://valkey.io/spdxdocs/valkey-server-sbom-7.2.14-@SPDX_CREATED@","creationInfo":{"created":"@SPDX_CREATED@","creators":["Organization: The Valkey Project","Tool: valkey-container"]},"packages":[{"name":"valkey-server","versionInfo":"7.2.14","SPDXID":"SPDXRef-Package--valkey-server","downloadLocation":"https://github.com/valkey-io/valkey/archive/refs/tags/7.2.14.tar.gz","filesAnalyzed":false,"externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@7.2.14?os_name=alpine&os_version=3.24"},{"referenceCategory":"SECURITY","referenceType":"cpe23Type","referenceLocator":"cpe:2.3:a:lfprojects:valkey:7.2.14:*:*:*:*:*:*:*"}],"licenseDeclared":"BSD-3-Clause"}]}' \
 		| sed "s|@SPDX_CREATED@|$SPDX_CREATED|g" > /usr/local/valkey.spdx.json
 
 FROM base
