@@ -125,6 +125,7 @@ RUN set -eux; \
 	; \
 	\
 	SPDX_CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+	SPDX_UUID="$(cat /proc/sys/kernel/random/uuid)"; \
 	echo {{
 		{
 			name: "valkey-server",
@@ -148,7 +149,7 @@ RUN set -eux; \
 			]
 		} | valkey_sbom | tostring | @sh
 	}} \
-		| sed "s|@SPDX_CREATED@|$SPDX_CREATED|g" > /usr/local/valkey.spdx.json
+		| sed -e "s|@SPDX_CREATED@|$SPDX_CREATED|g" -e "s|@SPDX_UUID@|$SPDX_UUID|g" > /usr/local/valkey.spdx.json
 
 FROM base
 
