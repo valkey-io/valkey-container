@@ -46,11 +46,12 @@ def valkey_sbom:
 						referenceType: "purl",
 						referenceLocator: ("pkg:generic/" + .name + "@" + .version + "?" + (.params | [to_entries[] | .key + "=" + .value] | join("\u0026")))
 					},
-# "lfprojects:valkey" is the vendor:product pair NVD registers for Valkey
-# (e.g. cpe:2.3:a:lfprojects:valkey:8.1.1:*:*:*:*:*:*:*), so scanners can match
-# advisories against this package. The generic purl above is not matchable on
-# its own: it has no authoritative namespace and its name ("valkey-server")
-# differs from the NVD product name ("valkey").
+					# "lfprojects:valkey" is the vendor:product pair NVD registers for
+					# Valkey (e.g. cpe:2.3:a:lfprojects:valkey:8.1.1:*:*:*:*:*:*:*), so
+					# scanners can match advisories against this package. The generic
+					# purl above is not matchable on its own: it has no authoritative
+					# namespace and its name ("valkey-server") differs from the NVD
+					# product name ("valkey").
 					{
 						referenceCategory: "SECURITY",
 						referenceType: "cpe23Type",
