@@ -1,5 +1,4 @@
 name: GitHub CI
-run-name: ${{ inputs.correlation_id != '' && format('CVE rebuild {0}', inputs.correlation_id) || github.event.pull_request.title || github.event.head_commit.message || github.workflow }}
 
 on:
   pull_request:
@@ -12,16 +11,6 @@ on:
         description: 'Versions to build and push, space-separated (ex: "9.0.2" or "9.0.2 8.1.5" or unstable)'
         required: true
         type: string
-      correlation_id:
-        description: 'Unique CVE rebuild identifier; enables build-verify-promote mode'
-        required: false
-        type: string
-        default: ''
-      targeted_findings:
-        description: 'Base64 JSON list of targeted CVE/package/platform findings'
-        required: false
-        type: string
-        default: ''
 
 env:
   PUBLISH_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' && github.ref == 'refs/heads/mainline' }}
@@ -56,10 +45,6 @@ jobs:
           echo "publish_ecr=$PUBLISH_ECR" >> "$GITHUB_OUTPUT"
       - id: generate-jobs
         name: Generate Jobs
-        env:
-          VERSION_INPUT: ${{ inputs.version }}
-          CVE_CORRELATION_ID: ${{ inputs.correlation_id }}
-          CVE_TARGETS_B64: ${{ inputs.targeted_findings }}
         run: |
           # Generate full strategy for testing all versions
           test_strategy="$("$BASHBREW_SCRIPTS/github-actions/generate.sh")"
@@ -70,48 +55,11 @@ jobs:
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
             publish_strategy=$(jq -c '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name =="unstable" or .name== "unstable-alpine")]}}' <<<"$publish_strategy")
           elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ -n "$CVE_CORRELATION_ID" ]]; then
-              [[ -n "$CVE_TARGETS_B64" ]] || { echo "CVE rebuild requires targeted_findings" >&2; exit 1; }
-              targets_json=$(printf '%s' "$CVE_TARGETS_B64" | base64 --decode)
-              target_names=$(jq -ce '
-                if type != "array" or length == 0 then error("targets must be a non-empty list") else . end
-                | [ .[] | .image | select(type == "string") | split(":")[-1] ]
-                | unique
-                | if length == 0 then error("targets contain no image tags") else . end
-              ' <<<"$targets_json")
-              publish_strategy=$(jq -c --argjson names "$target_names" '
-                def matches_target($entry; $target):
-                  any($entry.meta.entries[0].tags[]; . == ("valkey-container:" + $target));
-                . as $strategy
-                | [
-                    $names[] as $target
-                    | {
-                        target: $target,
-                        matches: [
-                          $strategy.matrix.include[]
-                          | select(matches_target(.; $target))
-                        ]
-                      }
-                  ] as $resolved
-                | if any($resolved[]; (.matches | length) != 1)
-                  then error("every target image must map to exactly one build matrix entry")
-                  else {
-                    "fail-fast": $strategy["fail-fast"],
-                    "matrix": {"include": [$resolved[].matches[]] | unique_by(.name)}
-                  }
-                  end
-              ' <<<"$publish_strategy")
-              [[ "$(jq '.matrix.include | length' <<<"$publish_strategy")" -gt 0 ]] || {
-                echo "No build matrix entries match the targeted findings" >&2
-                exit 1
-              }
-              # A CVE rebuild tests exactly the candidate variants that may be promoted.
-              test_strategy="$publish_strategy"
-            else
-              # Normal manual build: preserve the existing version-pattern behavior.
-              version_pattern=$(echo "$VERSION_INPUT" | xargs | tr ' ' '|')
-              publish_strategy=$(jq -c --arg version "$version_pattern" '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name | test($version))]}}' <<<"$publish_strategy")
-            fi
+            # If triggered by a workflow dispatch, build only the specified version(s)
+            # Space-separated version (e.g. "9.0.2 8.1.5 unstable")
+            version_input="${{ github.event.inputs.version }}"
+            version_pattern=$(echo "$version_input" | xargs | tr ' ' '|')
+            publish_strategy=$(jq -c --arg version "$version_pattern" '{"fail-fast": .["fail-fast"],"matrix":{"include":[ .matrix.include[]|select(.name | test($version))]}}' <<<"$publish_strategy")
           elif [[ ("${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/mainline") || ("${{ github.event_name }}" == "pull_request" && "${{ github.base_ref }}" == "mainline") ]]; then
             # For pushes to mainline or PRs targeting mainline, only build changed versions
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
@@ -139,13 +87,6 @@ jobs:
           echo "Publish Strategy:"
           jq . <<<"$publish_strategy" # sanity check / debugging aid
 
-  cve-script-tests:
-    name: Test CVE candidate scripts
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-      - run: python -m unittest discover -s tests -p 'test_*.py' -v
-
   test:
     needs: generate-jobs
     strategy: ${{ fromJson(needs.generate-jobs.outputs.test_strategy) }}
@@ -170,7 +111,6 @@ jobs:
     if: |
       ((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
       github.ref == 'refs/heads/mainline' &&
-      inputs.correlation_id == '' &&
       fromJson(needs.generate-jobs.outputs.publish_strategy).matrix.include[0] &&
       (needs.generate-jobs.outputs.publish_dockerhub == 'true' || needs.generate-jobs.outputs.publish_ghcr == 'true' || needs.generate-jobs.outputs.publish_ecr == 'true'))
     needs:
@@ -253,209 +193,6 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
           provenance: false
           load: false
-
-  cve-build-verify:
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      inputs.correlation_id != '' &&
-      github.repository == 'valkey-io/valkey-container' &&
-      github.ref == 'refs/heads/mainline' &&
-      fromJson(needs.generate-jobs.outputs.publish_strategy).matrix.include[0]
-    needs:
-      - generate-jobs
-      - test
-      - cve-script-tests
-    strategy: ${{ fromJson(needs.generate-jobs.outputs.publish_strategy) }}
-    name: ${{ matrix.name }} - Build and verify CVE candidate
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-
-      - name: Define immutable candidate destination
-        id: candidate
-        env:
-          CORRELATION_ID: ${{ inputs.correlation_id }}
-          IMAGE_NAME: ${{ matrix.name }}
-        run: |
-          [[ "$CORRELATION_ID" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "Invalid correlation ID" >&2; exit 1; }
-          safe_name=$(sed 's/[^A-Za-z0-9_.-]/-/g' <<<"$IMAGE_NAME")
-          repository="ghcr.io/${{ github.repository_owner }}/valkey"
-          reference="${repository}:cve-candidate-${CORRELATION_ID}-${safe_name}"
-          echo "repository=${repository}" >> "$GITHUB_OUTPUT"
-          echo "reference=${reference}" >> "$GITHUB_OUTPUT"
-          echo "safe_name=${safe_name}" >> "$GITHUB_OUTPUT"
-
-      - name: Build and push candidate without production tags
-        id: build
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
-        with:
-          context: .
-          file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
-          push: true
-          tags: ${{ steps.candidate.outputs.reference }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
-          provenance: false
-
-      - name: Confirm all published platforms are in the candidate
-        id: manifest
-        env:
-          CANDIDATE: ${{ steps.candidate.outputs.repository }}@${{ steps.build.outputs.digest }}
-        run: |
-          manifest=$(docker buildx imagetools inspect --raw "$CANDIDATE")
-          actual=$(jq -r '[.manifests[].platform | .os + "/" + .architecture + (if .variant then "/" + .variant else "" end)] | sort | .[]' <<<"$manifest")
-          expected=$'linux/amd64\nlinux/arm/v7\nlinux/arm64\nlinux/ppc64le'
-          [[ "$actual" == "$expected" ]] || {
-            echo "Candidate platform set does not match the published platform set" >&2
-            diff -u <(printf '%s\n' "$expected") <(printf '%s\n' "$actual") || true
-            exit 1
-          }
-          platform_digests=$(jq -ce '
-            [.manifests[] | {
-              key: (.platform.os + "/" + .platform.architecture + (if .platform.variant then "/" + .platform.variant else "" end)),
-              value: .digest
-            }] | from_entries
-          ' <<<"$manifest")
-          echo "platform_digests=${platform_digests}" >> "$GITHUB_OUTPUT"
-
-      - name: Install Trivy
-        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
-        with:
-          version: v0.72.0
-
-      - name: Verify targeted findings are absent from the exact candidate digest
-        env:
-          CANDIDATE: ${{ steps.candidate.outputs.repository }}@${{ steps.build.outputs.digest }}
-          IMAGE_NAME: ${{ matrix.name }}
-          CANDIDATE_TAGS_JSON: ${{ toJson(matrix.meta.entries[0].tags) }}
-          TARGETS_B64: ${{ inputs.targeted_findings }}
-        run: |
-          python scripts/cve/verify_candidate.py \
-            --candidate "$CANDIDATE" \
-            --image-tag "$IMAGE_NAME" \
-            --candidate-tags-json "$CANDIDATE_TAGS_JSON" \
-            --targets-b64 "$TARGETS_B64"
-
-      - name: Record verified candidate metadata
-        env:
-          IMAGE_NAME: ${{ matrix.name }}
-          REPOSITORY: ${{ steps.candidate.outputs.repository }}
-          DIGEST: ${{ steps.build.outputs.digest }}
-          ORIGINAL_TAGS: ${{ toJson(matrix.meta.entries[0].tags) }}
-          PLATFORM_DIGESTS: ${{ steps.manifest.outputs.platform_digests }}
-          SAFE_NAME: ${{ steps.candidate.outputs.safe_name }}
-        run: |
-          mkdir -p candidate-metadata
-          jq -n \
-            --arg name "$IMAGE_NAME" \
-            --arg repository "$REPOSITORY" \
-            --arg digest "$DIGEST" \
-            --argjson tags "$ORIGINAL_TAGS" \
-            --argjson platform_digests "$PLATFORM_DIGESTS" \
-            '{name: $name, repository: $repository, digest: $digest, tags: $tags, platform_digests: $platform_digests}' \
-            > "candidate-metadata/${SAFE_NAME}.json"
-
-      - name: Upload verified candidate metadata
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: cve-candidate-${{ steps.candidate.outputs.safe_name }}
-          path: candidate-metadata/*.json
-          if-no-files-found: error
-
-  cve-promote:
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      inputs.correlation_id != '' &&
-      github.repository == 'valkey-io/valkey-container' &&
-      github.ref == 'refs/heads/mainline'
-    needs:
-      - generate-jobs
-      - cve-build-verify
-    name: Promote verified CVE candidates
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - name: Download verified candidate metadata
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          pattern: cve-candidate-*
-          path: candidate-metadata
-          merge-multiple: true
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-
-      - name: Login to Docker Hub
-        if: needs.generate-jobs.outputs.publish_dockerhub == 'true'
-        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Configure AWS credentials via OIDC
-        if: needs.generate-jobs.outputs.publish_ecr == 'true'
-        uses: aws-actions/configure-aws-credentials@e7f100cf4c008499ea8adda475de1042d6975c7b # v6.2.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: us-east-1
-
-      - name: Login to Amazon ECR Public Gallery
-        if: needs.generate-jobs.outputs.publish_ecr == 'true'
-        run: |
-          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-
-      - name: Install registry promotion tool
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends skopeo
-
-      - name: Promote the verified digests to production tags
-        env:
-          GHCR_REPOSITORY: ghcr.io/${{ github.repository_owner }}/valkey
-          DOCKERHUB_REPOSITORY: ${{ needs.generate-jobs.outputs.publish_dockerhub == 'true' && format('docker.io/{0}/valkey', secrets.DOCKERHUB_ACCOUNT) || '' }}
-          ECR_REPOSITORY: ${{ needs.generate-jobs.outputs.publish_ecr == 'true' && format('public.ecr.aws/{0}/valkey', secrets.ECR_REGISTRY_ALIAS) || '' }}
-          CORRELATION_ID: ${{ inputs.correlation_id }}
-        run: |
-          python scripts/cve/promote_candidates.py \
-            --metadata-dir candidate-metadata \
-            --correlation-id "$CORRELATION_ID"
-
-      - name: Promotion summary
-        env:
-          CORRELATION_ID: ${{ inputs.correlation_id }}
-        run: |
-          {
-            echo "## CVE candidate promotion"
-            echo
-            echo "Correlation ID: \`$CORRELATION_ID\`"
-            echo
-            echo "Every targeted platform finding was absent from the immutable candidates before their exact digests were promoted."
-          } >> "$GITHUB_STEP_SUMMARY"
 
   update-dockerhub-ecr-description-file:
     if: |

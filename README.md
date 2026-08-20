@@ -23,7 +23,7 @@ You should build and publish a new Docker Image after a new major, minor or patc
 
 ## CVE candidate rebuilds
 
-`ci.yml` has a separate mode for automated CVE rebuilds. A caller supplies affected
+`cve-rebuild.yml` is the dedicated workflow for automated CVE rebuilds. A caller supplies affected
 version lines, a unique `correlation_id`, and a base64 JSON list of targeted
 `(image, CVE, package, platform)` findings.
 
