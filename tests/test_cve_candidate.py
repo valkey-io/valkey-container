@@ -12,6 +12,7 @@ from scripts.cve.promote_candidates import (
     Promotion,
     PromotionError,
     build_promotions,
+    configured_repositories,
     load_candidates,
     promote,
 )
@@ -153,6 +154,26 @@ class VerifyCandidateTests(unittest.TestCase):
 
 
 class PromoteCandidateTests(unittest.TestCase):
+    def test_configured_repositories_requires_all_production_registries(self) -> None:
+        with patch.dict("os.environ", {
+            "GHCR_REPOSITORY": "ghcr.io/valkey-io/valkey",
+            "DOCKERHUB_REPOSITORY": "docker.io/valkey/valkey",
+        }, clear=True):
+            with self.assertRaisesRegex(PromotionError, "missing ECR_REPOSITORY"):
+                configured_repositories()
+
+        expected = [
+            "ghcr.io/valkey-io/valkey",
+            "docker.io/valkey/valkey",
+            "public.ecr.aws/valkey/valkey",
+        ]
+        with patch.dict("os.environ", {
+            "GHCR_REPOSITORY": expected[0],
+            "DOCKERHUB_REPOSITORY": expected[1],
+            "ECR_REPOSITORY": expected[2],
+        }, clear=True):
+            self.assertEqual(configured_repositories(), expected)
+
     def test_load_candidates_and_build_registry_plan(self) -> None:
         digest = "sha256:" + "a" * 64
         with tempfile.TemporaryDirectory() as directory:

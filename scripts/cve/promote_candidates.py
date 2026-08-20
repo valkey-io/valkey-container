@@ -240,16 +240,18 @@ def promote(
 
 
 def configured_repositories() -> list[str]:
-    """Return enabled production repositories from explicit environment variables."""
-    return [
-        value
-        for value in (
-            os.environ.get("GHCR_REPOSITORY", ""),
-            os.environ.get("DOCKERHUB_REPOSITORY", ""),
-            os.environ.get("ECR_REPOSITORY", ""),
+    """Require and return every production registry destination."""
+    repositories = {
+        "GHCR_REPOSITORY": os.environ.get("GHCR_REPOSITORY", ""),
+        "DOCKERHUB_REPOSITORY": os.environ.get("DOCKERHUB_REPOSITORY", ""),
+        "ECR_REPOSITORY": os.environ.get("ECR_REPOSITORY", ""),
+    }
+    missing = [name for name, value in repositories.items() if not value]
+    if missing:
+        raise PromotionError(
+            "all production registries are required; missing " + ", ".join(missing)
         )
-        if value
-    ]
+    return list(repositories.values())
 
 
 def main() -> int:
