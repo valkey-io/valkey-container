@@ -1,4 +1,5 @@
 name: GitHub CI
+run-name: ${{ inputs.correlation_id != '' && format('CVE rebuild {0}', inputs.correlation_id) || github.event.pull_request.title || github.event.head_commit.message || github.workflow }}
 
 on:
   pull_request:
@@ -10,6 +11,10 @@ on:
       version:
         description: 'Versions to build and push, space-separated (ex: "9.0.2" or "9.0.2 8.1.5" or unstable)'
         required: true
+        type: string
+      correlation_id:
+        description: 'Optional caller-provided identifier used to locate this workflow run'
+        required: false
         type: string
 
 env:
@@ -124,6 +129,10 @@ jobs:
       contents: read
       packages: write
     steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
         # Tags are created by generate.sh in the format `valkey-container:<tag>`
         # For Docker Hub this step modifies the tags to `account/valkey:<tag>` to be provided to build-push github action.
         # For GitHub Container Registry this step modifies the tags to `ghcr.io/<repo-owner>/valkey:<tag>` to be provided to build-push github action.
@@ -149,12 +158,6 @@ jobs:
           fi
 
           echo "tags=$all_tags" >> $GITHUB_OUTPUT
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # v4.1.0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Login to Docker Hub
         if: env.PUBLISH_DOCKERHUB == 'true'
@@ -185,13 +188,13 @@ jobs:
           aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 
       - name: Build and push
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        uses: ./.github/actions/build-image
         with:
-          file: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
-          push: ${{ env.PUBLISH_DOCKERHUB == 'true' || env.PUBLISH_GHCR == 'true' || env.PUBLISH_ECR == 'true' }}
-          tags: ${{ steps.modify_tags.outputs.tags }}
+          context: "{{defaultContext}}"
+          dockerfile: ./${{ matrix.meta.entries[0].directory }}/Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/ppc64le
-          provenance: false
+          tags: ${{ steps.modify_tags.outputs.tags }}
+          push: ${{ env.PUBLISH_DOCKERHUB == 'true' || env.PUBLISH_GHCR == 'true' || env.PUBLISH_ECR == 'true' }}
           load: false
 
   update-dockerhub-ecr-description-file:
