@@ -112,6 +112,31 @@ jobs:
       - name: '"docker images"'
         run: ${{ matrix.runs.images }}
 
+  build_action_smoke:
+    if: github.event_name == 'pull_request'
+    name: Shared build action smoke test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - name: Build and load smoke image
+        uses: ./.github/actions/build-image
+        with:
+          context: .
+          dockerfile: ./.github/actions/build-image/smoke.Dockerfile
+          platforms: linux/amd64
+          tags: valkey-build-action-smoke:${{ github.sha }}
+          push: false
+          load: true
+      - name: Inspect smoke image
+        run: |
+          test "$(docker image inspect \
+            valkey-build-action-smoke:${{ github.sha }} \
+            --format '{{ index .Config.Labels "org.valkey.smoke" }}')" = "build-image"
+
   build_and_push:
     if: |
       ((github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
