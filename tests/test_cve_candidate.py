@@ -18,6 +18,7 @@ from scripts.cve.promote_candidates import (
 from scripts.cve.verify_candidate import (
     Target,
     VerificationError,
+    decode_candidate_tags,
     decode_targets,
     parse_trivy_findings,
     target_matches_candidate,
@@ -50,13 +51,25 @@ def _platform_digests() -> dict[str, str]:
 
 
 class VerifyCandidateTests(unittest.TestCase):
-    def test_version_line_target_matches_concrete_matrix_name(self) -> None:
-        self.assertTrue(target_matches_candidate("9.0", "9.0.5"))
-        self.assertTrue(target_matches_candidate("9.0-alpine", "9.0.5-alpine"))
-        self.assertTrue(target_matches_candidate("unstable", "unstable"))
-        self.assertFalse(target_matches_candidate("9.0", "9.0.5-alpine"))
-        self.assertFalse(target_matches_candidate("9.0-alpine", "9.0.5"))
-        self.assertFalse(target_matches_candidate("9.0", "9.1.1"))
+    def test_target_matches_generated_aliases_including_release_candidates(self) -> None:
+        rc_tags = ["valkey-container:9.1.0-rc1", "valkey-container:9.1"]
+        rc_alpine_tags = [
+            "valkey-container:9.1.0-rc1-alpine",
+            "valkey-container:9.1-alpine",
+        ]
+        self.assertTrue(target_matches_candidate("9.1", rc_tags))
+        self.assertTrue(target_matches_candidate("9.1-alpine", rc_alpine_tags))
+        self.assertFalse(target_matches_candidate("9.1", rc_alpine_tags))
+        self.assertFalse(target_matches_candidate("9.1-alpine", rc_tags))
+
+    def test_decode_candidate_tags_is_strict(self) -> None:
+        self.assertEqual(
+            decode_candidate_tags('["valkey-container:9.1.0-rc1", "valkey-container:9.1"]'),
+            ["valkey-container:9.1.0-rc1", "valkey-container:9.1"],
+        )
+        for raw in ("not json", "[]", '["other:9.1"]'):
+            with self.subTest(raw=raw), self.assertRaises(VerificationError):
+                decode_candidate_tags(raw)
 
     def test_decode_targets_round_trips_strict_contract(self) -> None:
         self.assertEqual(
@@ -105,6 +118,7 @@ class VerifyCandidateTests(unittest.TestCase):
             verify_candidate(
                 candidate="ghcr.io/valkey-io/valkey@sha256:" + "a" * 64,
                 image_tag="9.0.5",
+                candidate_tags=["valkey-container:9.0.5", "valkey-container:9.0"],
                 targets=[target],
             )
 
@@ -124,6 +138,7 @@ class VerifyCandidateTests(unittest.TestCase):
                 verify_candidate(
                     candidate="ghcr.io/valkey-io/valkey@sha256:" + "a" * 64,
                     image_tag="9.0.5",
+                    candidate_tags=["valkey-container:9.0.5", "valkey-container:9.0"],
                     targets=[target],
                 )
 
@@ -132,6 +147,7 @@ class VerifyCandidateTests(unittest.TestCase):
             verify_candidate(
                 candidate="ghcr.io/valkey-io/valkey@sha256:" + "a" * 64,
                 image_tag="8.1",
+                candidate_tags=["valkey-container:8.1"],
                 targets=[Target(**_target())],
             )
 

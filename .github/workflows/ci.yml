@@ -80,15 +80,8 @@ jobs:
                 | if length == 0 then error("targets contain no image tags") else . end
               ' <<<"$targets_json")
               publish_strategy=$(jq -c --argjson names "$target_names" '
-                def matches_target($name; $target):
-                  if $name == $target then true
-                  elif ($target | test("^[0-9]+\\.[0-9]+-alpine$")) then
-                    ($target | sub("-alpine$"; "")) as $line
-                    | ($name | startswith($line + ".")) and ($name | endswith("-alpine"))
-                  elif ($target | test("^[0-9]+\\.[0-9]+$")) then
-                    ($name | startswith($target + ".")) and (($name | endswith("-alpine")) | not)
-                  else false
-                  end;
+                def matches_target($entry; $target):
+                  any($entry.meta.entries[0].tags[]; . == ("valkey-container:" + $target));
                 . as $strategy
                 | [
                     $names[] as $target
@@ -96,7 +89,7 @@ jobs:
                         target: $target,
                         matches: [
                           $strategy.matrix.include[]
-                          | select(matches_target(.name; $target))
+                          | select(matches_target(.; $target))
                         ]
                       }
                   ] as $resolved
@@ -349,11 +342,13 @@ jobs:
         env:
           CANDIDATE: ${{ steps.candidate.outputs.repository }}@${{ steps.build.outputs.digest }}
           IMAGE_NAME: ${{ matrix.name }}
+          CANDIDATE_TAGS_JSON: ${{ toJson(matrix.meta.entries[0].tags) }}
           TARGETS_B64: ${{ inputs.targeted_findings }}
         run: |
           python scripts/cve/verify_candidate.py \
             --candidate "$CANDIDATE" \
             --image-tag "$IMAGE_NAME" \
+            --candidate-tags-json "$CANDIDATE_TAGS_JSON" \
             --targets-b64 "$TARGETS_B64"
 
       - name: Record verified candidate metadata

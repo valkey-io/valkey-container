@@ -158,24 +158,36 @@ def run_trivy(candidate: str, platform: str, *, executable: str = "trivy") -> di
     return payload
 
 
-def target_matches_candidate(target_tag: str, candidate_name: str) -> bool:
-    """Match a published version-line tag to its concrete build matrix entry."""
-    if target_tag == candidate_name:
-        return True
-    match = re.fullmatch(r"(?P<line>\d+\.\d+)(?P<alpine>-alpine)?", target_tag)
-    if match is None:
-        return False
-    suffix = "-alpine" if match.group("alpine") else ""
-    return re.fullmatch(
-        rf"{re.escape(match.group('line'))}\.\d+{re.escape(suffix)}",
-        candidate_name,
-    ) is not None
+def decode_candidate_tags(raw: str) -> list[str]:
+    """Parse the exact aliases generated for one build matrix entry."""
+    try:
+        tags = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise VerificationError("candidate tags are not valid JSON") from exc
+    if (
+        not isinstance(tags, list)
+        or not tags
+        or not all(
+            isinstance(tag, str) and tag.startswith("valkey-container:")
+            for tag in tags
+        )
+    ):
+        raise VerificationError(
+            "candidate tags must be a non-empty list of valkey-container aliases"
+        )
+    return tags
+
+
+def target_matches_candidate(target_tag: str, candidate_tags: list[str]) -> bool:
+    """Match a scan target against the aliases generated for the candidate."""
+    return f"valkey-container:{target_tag}" in candidate_tags
 
 
 def verify_candidate(
     *,
     candidate: str,
     image_tag: str,
+    candidate_tags: list[str],
     targets: list[Target],
     trivy_executable: str = "trivy",
 ) -> None:
@@ -186,7 +198,7 @@ def verify_candidate(
     selected = [
         target
         for target in targets
-        if target_matches_candidate(target.image_tag, image_tag)
+        if target_matches_candidate(target.image_tag, candidate_tags)
     ]
     if not selected:
         raise VerificationError(f"no targeted findings were supplied for image {image_tag!r}")
@@ -226,15 +238,18 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--image-tag", required=True)
+    parser.add_argument("--candidate-tags-json", required=True)
     parser.add_argument("--targets-b64", required=True)
     parser.add_argument("--trivy", default="trivy")
     args = parser.parse_args()
 
     try:
         targets = decode_targets(args.targets_b64)
+        candidate_tags = decode_candidate_tags(args.candidate_tags_json)
         verify_candidate(
             candidate=args.candidate,
             image_tag=args.image_tag,
+            candidate_tags=candidate_tags,
             targets=targets,
             trivy_executable=args.trivy,
         )
