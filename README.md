@@ -20,3 +20,23 @@ You should build and publish a new Docker Image after a new major, minor or patc
 5. Verify all the tests pass on your fork and that your private Docker Hub repository has been updated.
 6. Publish a PR with these changes. For example: [#8](https://github.com/valkey-io/valkey-container/pull/8)
 7. Once the PR is merged, Sit back, relax and enjoy looking at your creation getting published to the official Docker Hub page.
+
+## CVE candidate rebuilds
+
+`ci.yml` has a separate mode for automated CVE rebuilds. A caller supplies affected
+version lines, a unique `correlation_id`, and a base64 JSON list of targeted
+`(image, CVE, package, platform)` findings.
+
+This mode never sends a newly built image directly to a production tag:
+
+1. The build and test matrices are restricted to the exact image variants named by the targets.
+2. Each variant is built for amd64, arm64, arm/v7, and ppc64le under a unique non-production GHCR tag.
+3. The workflow records the immutable multi-platform digest and each platform digest, then verifies the complete platform set.
+4. Trivy scans that exact digest on every targeted platform. Any original CVE/package tuple that remains fails the workflow.
+5. Only after every candidate passes are those same digests staged in GHCR, Docker Hub, and ECR and copied to production aliases with digest preservation enabled.
+6. Existing production digests are recorded before retagging. A promotion failure triggers rollback attempts and leaves the workflow failed even when rollback succeeds.
+
+The correlation ID is included in the workflow run name so callers can identify the
+exact run without timestamp polling. Candidate and staging tags are intentionally
+unique and retained as an audit trail; production consumers should continue using
+the documented release aliases.
