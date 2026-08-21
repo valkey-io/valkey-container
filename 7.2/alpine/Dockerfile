@@ -109,6 +109,8 @@ RUN set -eux; \
 		setpriv \
 		openssl \
 		libgcc \
+		# add tini to act as PID 1 and reap orphaned/zombie processes
+		tini \
 	;
 
 # Install valkey built earlier
@@ -124,7 +126,7 @@ RUN mkdir /data && \
 WORKDIR /data
 
 COPY docker-entrypoint.sh /usr/local/bin/
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "docker-entrypoint.sh"]
 
 EXPOSE 6379
 CMD ["valkey-server"]

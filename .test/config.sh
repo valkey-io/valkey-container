@@ -9,5 +9,6 @@ imageTests+=(
 		valkey-readonly-data
 		valkey-user-flag
 		valkey-sbom
+		valkey-tini
 	'
 )
