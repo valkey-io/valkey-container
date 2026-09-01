@@ -8,9 +8,9 @@ FROM alpine:3.24 AS base
 
 FROM base AS build
 
-ENV VALKEY_DOWNLOAD_SHA 7d7232acd1b8a49b4e05d07a00b3ca8c801ae06ab633ca6a3423bc5f385ab7ee
+ENV VALKEY_DOWNLOAD_SHA 19c23908e7d57e8d91ef85b41f5646307582f10f4f0fb999bbf89ed24ec9c983
 
-ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.1.tar.gz" /valkey.tar.gz
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.1.2.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
@@ -68,7 +68,7 @@ RUN set -eux; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
-	echo "Version 9.1.1 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
+	echo "Version 9.1.2 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
 	export USE_LIBBACKTRACE=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
@@ -86,12 +86,12 @@ RUN set -eux; \
 	\
 	SPDX_CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
 	SPDX_UUID="$(cat /proc/sys/kernel/random/uuid)"; \
-	echo '{"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","documentNamespace":"https://valkey.io/spdxdocs/valkey-server-sbom-9.1.1-alpine-3.24-@SPDX_UUID@","creationInfo":{"created":"@SPDX_CREATED@","creators":["Organization: The Valkey Project","Tool: valkey-container"]},"packages":[{"name":"valkey-server","versionInfo":"9.1.1","SPDXID":"SPDXRef-Package--valkey-server","supplier":"Organization: The Valkey Project","downloadLocation":"https://github.com/valkey-io/valkey/archive/refs/tags/9.1.1.tar.gz","filesAnalyzed":false,"externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.1.1?os_name=alpine&os_version=3.24"},{"referenceCategory":"SECURITY","referenceType":"cpe23Type","referenceLocator":"cpe:2.3:a:lfprojects:valkey:9.1.1:*:*:*:*:*:*:*"}],"licenseDeclared":"BSD-3-Clause"}],"relationships":[{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-Package--valkey-server"}]}' \
+	echo '{"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","documentNamespace":"https://valkey.io/spdxdocs/valkey-server-sbom-9.1.2-alpine-3.24-@SPDX_UUID@","creationInfo":{"created":"@SPDX_CREATED@","creators":["Organization: The Valkey Project","Tool: valkey-container"]},"packages":[{"name":"valkey-server","versionInfo":"9.1.2","SPDXID":"SPDXRef-Package--valkey-server","supplier":"Organization: The Valkey Project","downloadLocation":"https://github.com/valkey-io/valkey/archive/refs/tags/9.1.2.tar.gz","filesAnalyzed":false,"externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.1.2?os_name=alpine&os_version=3.24"},{"referenceCategory":"SECURITY","referenceType":"cpe23Type","referenceLocator":"cpe:2.3:a:lfprojects:valkey:9.1.2:*:*:*:*:*:*:*"}],"licenseDeclared":"BSD-3-Clause"}],"relationships":[{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-Package--valkey-server"}]}' \
 		| sed -e "s|@SPDX_CREATED@|$SPDX_CREATED|g" -e "s|@SPDX_UUID@|$SPDX_UUID|g" > /usr/local/valkey.spdx.json
 
 FROM base
 
-ENV VALKEY_VERSION 9.1.1
+ENV VALKEY_VERSION 9.1.2
 
 LABEL org.opencontainers.image.source="https://github.com/valkey-io/valkey"
 
