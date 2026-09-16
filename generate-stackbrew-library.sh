@@ -89,7 +89,12 @@ for version; do
 		${aliases[$version]:-}
 	)
 
-	for variant in debian alpine; do
+	for variant in debian alpine pkg; do
+		# upstream publishes no packages for "unstable"
+		if [ "$variant" = 'pkg' ] && [ "$version" = 'unstable' ]; then
+			continue
+		fi
+
 		export variant
 		dir="$version/$variant"
 
@@ -103,16 +108,26 @@ for version; do
 		fi
 
 		parent="$(awk 'toupper($1) == "FROM" && index($2, ":") > 0 { print $2 }' "$dir/Dockerfile")"
-		arches="${parentRepoToArches[$parent]}"
 
-		suite="${parent#*:}" # "bookworm-slim", "bookworm"
-		suite="${suite%-slim}" # "bookworm"
-		if [ "$variant" = 'alpine' ]; then
-			suite="alpine$suite" # "alpine3.18"
+		if [ "$variant" = 'pkg' ]; then
+			# upstream publishes packages for these two architectures only
+			arches='amd64 arm64v8'
+		else
+			arches="${parentRepoToArches[$parent]}"
 		fi
-		suiteAliases=( "${versionAliases[@]/%/-$suite}" )
-		suiteAliases=( "${suiteAliases[@]//latest-/}" )
-		variantAliases+=( "${suiteAliases[@]}" )
+
+		# the pkg variant shares its base with the debian variant, so suite
+		# aliases would collide; it is identified by its "-pkg" suffix alone
+		if [ "$variant" != 'pkg' ]; then
+			suite="${parent#*:}" # "bookworm-slim", "bookworm"
+			suite="${suite%-slim}" # "bookworm"
+			if [ "$variant" = 'alpine' ]; then
+				suite="alpine$suite" # "alpine3.18"
+			fi
+			suiteAliases=( "${versionAliases[@]/%/-$suite}" )
+			suiteAliases=( "${suiteAliases[@]//latest-/}" )
+			variantAliases+=( "${suiteAliases[@]}" )
+		fi
 
 		echo
 		cat <<-EOE

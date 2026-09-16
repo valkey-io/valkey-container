@@ -104,6 +104,17 @@ This variant is useful when final image size being as small as possible is your 
 
 To minimize image size, it's uncommon for additional related tools (such as `git` or `bash`) to be included in Alpine-based images. Using this image as a base, add the things you need in your own Dockerfile (see the [`alpine` image description](https://hub.docker.com/_/alpine/) for examples of how to install packages if you are unfamiliar).
 
+## `{container_repo_path}:<version>-pkg`
+
+This variant installs the same Valkey release from the `.deb` packages the Valkey project publishes at [download.valkey.io](https://download.valkey.io/packaging/), instead of compiling Valkey from source during the image build. Otherwise it behaves like the other variants: same entrypoint, same `/data` volume, same default user.
+
+This variant is currently published for `amd64` and `arm64` only, since that's what the upstream package repository provides; the other variants above cover more architectures than that.
+
+This variant also disables "Protected mode" (see Security, above), but by a different mechanism than the other variants use, and that difference is worth knowing about. The other variants patch the compiled-in default, so a config file you supply always wins. This variant instead sets `--protected-mode no` through the `VALKEY_EXTRA_FLAGS` environment variable, which `docker-entrypoint.sh` appends to the server's arguments, and that has two consequences:
+
+-	If you supply your own config file with `protected-mode yes` set, this variant still starts with protected mode off: the appended flag is applied after your config file loads and wins. On the other variants, your config file's setting is respected, because protected mode there is a compiled-in default rather than an appended flag.
+-	If you set your own `VALKEY_EXTRA_FLAGS` (see "Pass additional start arguments with environment variable", above), you replace the image's value rather than add to it, which re-enables protected mode. If you still want this image family's usual cross-container connectivity, include `--protected-mode no` in whatever flags you set.
+
 # License
 
 View [license information](https://github.com/valkey-io/valkey/blob/unstable/COPYING) for the software contained in this image.
