@@ -64,5 +64,16 @@
     "alpine": {
       "version": "3.24"
     }
+  },
+  "9.2": {
+    "version": "9.2.0-rc1",
+    "url": "https://github.com/valkey-io/valkey/archive/refs/tags/9.2.0-rc1.tar.gz",
+    "sha256": "615419786808702dcebb0de6ae19eba049173c855144a27b5bd7e65f06e970c3",
+    "debian": {
+      "version": "trixie"
+    },
+    "alpine": {
+      "version": "3.24"
+    }
   }
 }
