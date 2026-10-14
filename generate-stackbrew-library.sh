@@ -81,7 +81,7 @@ for version; do
 
 	versionAliases=()
 	if [[ "$fullVersion" == *-rc* ]]; then
-		versionAliases+=( $fullVersion $version-rc )
+		versionAliases+=( $fullVersion ${version}-rc )
 	else
 		while [ "$fullVersion" != "$version" ] && [ "${fullVersion%.*}" != "$fullVersion" ]; do
 			versionAliases+=( $fullVersion )
