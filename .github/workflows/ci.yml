@@ -97,8 +97,21 @@ jobs:
     strategy: ${{ fromJson(needs.generate-jobs.outputs.test_strategy) }}
     name: ${{ matrix.name }} - test
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Configure AWS credentials for authenticated public ECR pulls
+        if: env.PUBLISH_ECR == 'true'
+        uses: aws-actions/configure-aws-credentials@e7f100cf4c008499ea8adda475de1042d6975c7b # v6.2.0
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-east-1
+      - name: Login to Amazon ECR Public Gallery
+        if: env.PUBLISH_ECR == 'true'
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
       - name: Prepare Environment
         run: ${{ matrix.runs.prepare }}
       - name: Pull Dependencies
