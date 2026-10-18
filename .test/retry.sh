@@ -39,7 +39,7 @@ fi
 while ! eval "$@" &>/dev/null; do
   ((tries--))
   if [ $tries -le 0 ]; then
-    echo >&2 "${image:-the container} failed to accept connections in a reasonable amount of time!"
+    echo >&2 "${image:-the container} did not become ready in a reasonable amount of time!"
     [ "$cid" ] && (set -x && docker logs "$cid") >&2
     (set -x && eval "$@") >&2
     exit 1

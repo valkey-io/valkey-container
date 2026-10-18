@@ -5,13 +5,24 @@ dir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
 image="$1"
 
-# Mirror of the official python image (avoids Docker Hub pull limits)
+# Prefer the Public ECR mirror of the official Python image. Fall back to
+# Docker Hub when anonymous Public ECR pulls exhaust their shared data quota;
+# authenticated upstream runs should normally succeed on the first registry.
 pythonImage='public.ecr.aws/docker/library/python:3.12-slim'
-
-# Pre-pull with retries: parallel CI jobs pulling the same image from shared
-# runner IPs can hit anonymous registry rate limits (toomanyrequests).
-# NOTE: retry.sh is sourced and its --image flag would clobber our $image.
-. "$dir/../../retry.sh" --tries 10 --sleep 15 "docker pull -q '$pythonImage'"
+if ! "$dir/../../retry.sh" \
+	--image "$pythonImage" \
+	--tries 3 \
+	--sleep 15 \
+	"docker pull -q '$pythonImage'"
+then
+	pythonImage='docker.io/library/python:3.12-slim'
+	echo >&2 "Public ECR pull failed; falling back to $pythonImage."
+	"$dir/../../retry.sh" \
+		--image "$pythonImage" \
+		--tries 3 \
+		--sleep 15 \
+		"docker pull -q '$pythonImage'"
+fi
 
 # Build the reference SPDX validator (spdx-tools) into its own image, so the
 # test host only needs docker. Version pinned for reproducible CI runs.
