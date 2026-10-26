@@ -38,7 +38,17 @@ generated_warning() {
 for version; do
 	rm -rf "$version"
 
-	for variant in debian alpine; do
+	for variant in debian alpine pkg; do
+		template='Dockerfile.template'
+		if [ "$variant" = 'pkg' ]; then
+			# upstream publishes deb packages for GA releases only, so there is
+			# nothing to install for "unstable" or for a release candidate
+			case "$version/$(jq -r --arg v "$version" '.[$v].version' versions.json)" in
+				unstable/* | *-rc*) continue ;;
+			esac
+			template='Dockerfile-pkg.template'
+		fi
+
 		export version variant
 
 		dir="$version/$variant"
@@ -49,7 +59,7 @@ for version; do
 
 		{
 			generated_warning
-			gawk -f "$jqt" Dockerfile.template
+			gawk -f "$jqt" "$template"
 		} > "$dir/Dockerfile"
 
 		cp -a docker-entrypoint.sh "$dir/"
