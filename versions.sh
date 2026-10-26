@@ -28,7 +28,7 @@ fi
 versions=( "${versions[@]%/}" )
 
 packages="$(
-	wget -qO- 'https://github.com/valkey-io/valkey-hashes/raw/main/README' \
+	{ if [ -n "${VALKEY_HASHES_README:-}" ]; then cat -- "$VALKEY_HASHES_README"; else wget -qO- 'https://github.com/valkey-io/valkey-hashes/raw/main/README'; fi; } \
 	| jq -csR '
 		rtrimstr("\n")
 		| split("\n")
