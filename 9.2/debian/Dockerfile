@@ -8,9 +8,9 @@ FROM debian:trixie-slim AS base
 
 FROM base AS build
 
-ENV VALKEY_DOWNLOAD_SHA 615419786808702dcebb0de6ae19eba049173c855144a27b5bd7e65f06e970c3
+ENV VALKEY_DOWNLOAD_SHA d9e2e18c5955f8a2ffb2f174bead14468c2a857f382f61b435db5e0e4cb09f37
 
-ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.2.0-rc1.tar.gz" /valkey.tar.gz
+ADD "https://github.com/valkey-io/valkey/archive/refs/tags/9.2.0-rc2.tar.gz" /valkey.tar.gz
 
 RUN set -eux; \
 	\
@@ -54,7 +54,7 @@ RUN set -eux; \
 	sed -ri 's!cd jemalloc && ./configure !&'"$extraJemallocConfigureFlags"' !' /usr/src/valkey/deps/Makefile; \
 	grep -F "cd jemalloc && ./configure $extraJemallocConfigureFlags " /usr/src/valkey/deps/Makefile; \
 	\
-	echo "Version 9.2.0-rc1 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
+	echo "Version 9.2.0-rc2 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 			apt-get update; \
 		apt-get install -y --no-install-recommends g++; \
 		rm -rf /var/lib/apt/lists/*; \
@@ -75,12 +75,12 @@ RUN set -eux; \
 	\
 	SPDX_CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
 	SPDX_UUID="$(cat /proc/sys/kernel/random/uuid)"; \
-	echo '{"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","documentNamespace":"https://valkey.io/spdxdocs/valkey-server-sbom-9.2.0-rc1-debian-trixie-@SPDX_UUID@","creationInfo":{"created":"@SPDX_CREATED@","creators":["Organization: The Valkey Project","Tool: valkey-container"]},"packages":[{"name":"valkey-server","versionInfo":"9.2.0-rc1","SPDXID":"SPDXRef-Package--valkey-server","supplier":"Organization: The Valkey Project","downloadLocation":"https://github.com/valkey-io/valkey/archive/refs/tags/9.2.0-rc1.tar.gz","filesAnalyzed":false,"externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.2.0-rc1?os_name=debian&os_version=trixie"},{"referenceCategory":"SECURITY","referenceType":"cpe23Type","referenceLocator":"cpe:2.3:a:lfprojects:valkey:9.2.0:rc1:*:*:*:*:*:*"}],"licenseDeclared":"BSD-3-Clause"}],"relationships":[{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-Package--valkey-server"}]}' \
+	echo '{"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"valkey-server-sbom","documentNamespace":"https://valkey.io/spdxdocs/valkey-server-sbom-9.2.0-rc2-debian-trixie-@SPDX_UUID@","creationInfo":{"created":"@SPDX_CREATED@","creators":["Organization: The Valkey Project","Tool: valkey-container"]},"packages":[{"name":"valkey-server","versionInfo":"9.2.0-rc2","SPDXID":"SPDXRef-Package--valkey-server","supplier":"Organization: The Valkey Project","downloadLocation":"https://github.com/valkey-io/valkey/archive/refs/tags/9.2.0-rc2.tar.gz","filesAnalyzed":false,"externalRefs":[{"referenceCategory":"PACKAGE-MANAGER","referenceType":"purl","referenceLocator":"pkg:generic/valkey-server@9.2.0-rc2?os_name=debian&os_version=trixie"},{"referenceCategory":"SECURITY","referenceType":"cpe23Type","referenceLocator":"cpe:2.3:a:lfprojects:valkey:9.2.0:rc2:*:*:*:*:*:*"}],"licenseDeclared":"BSD-3-Clause"}],"relationships":[{"spdxElementId":"SPDXRef-DOCUMENT","relationshipType":"DESCRIBES","relatedSpdxElement":"SPDXRef-Package--valkey-server"}]}' \
 		| sed -e "s|@SPDX_CREATED@|$SPDX_CREATED|g" -e "s|@SPDX_UUID@|$SPDX_UUID|g" > /usr/local/valkey.spdx.json
 
 FROM base
 
-ENV VALKEY_VERSION 9.2.0-rc1
+ENV VALKEY_VERSION 9.2.0-rc2
 
 LABEL org.opencontainers.image.source="https://github.com/valkey-io/valkey"
 
