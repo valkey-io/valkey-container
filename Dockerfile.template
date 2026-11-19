@@ -24,6 +24,11 @@ RUN set -eux; \
 		make \
 		musl-dev \
 		openssl-dev \
+{{ if .version == "unstable" or ((.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber)) >= 902 then ( -}}
+		pkgconf \
+		zstd-dev \
+		zstd-static \
+{{ ) else "" end -}}
 		git \
 		autoconf \
 		automake \
@@ -47,6 +52,10 @@ RUN set -eux; \
 		libc6-dev \
 		libssl-dev \
 		libsystemd-dev \
+{{ if .version == "unstable" or ((.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber)) >= 902 then ( -}}
+		libzstd-dev \
+		pkg-config \
+{{ ) else "" end -}}
 		make \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
@@ -106,6 +115,10 @@ RUN set -eux; \
 {{ ) else ( -}}
 	export BUILD_TLS=yes; \
 {{ ) end -}}
+{{ if .version == "unstable" or ((.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber)) >= 902 then ( -}}
+# Zstandard (9.2+) links the static libzstd.a; nothing extra is needed at runtime.
+	export BUILD_ZSTD=yes; \
+{{ ) else "" end -}}
 {{ if env.variant == "alpine" then ( -}}
 	export USE_LIBBACKTRACE=yes; \
 {{ ) else ( -}}

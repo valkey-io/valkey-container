@@ -21,6 +21,8 @@ RUN set -eux; \
 		libc6-dev \
 		libssl-dev \
 		libsystemd-dev \
+		libzstd-dev \
+		pkg-config \
 		make \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
@@ -59,6 +61,8 @@ RUN set -eux; \
 		apt-get install -y --no-install-recommends g++; \
 		rm -rf /var/lib/apt/lists/*; \
 		export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+# Zstandard (9.2+) links the static libzstd.a; nothing extra is needed at runtime.
+	export BUILD_ZSTD=yes; \
 	export USE_SYSTEMD=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
