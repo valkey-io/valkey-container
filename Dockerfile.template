@@ -116,7 +116,6 @@ RUN set -eux; \
 	export BUILD_TLS=yes; \
 {{ ) end -}}
 {{ if .version == "unstable" or ((.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber)) >= 902 then ( -}}
-# Zstandard (9.2+) links the static libzstd.a; nothing extra is needed at runtime.
 	export BUILD_ZSTD=yes; \
 {{ ) else "" end -}}
 {{ if env.variant == "alpine" then ( -}}

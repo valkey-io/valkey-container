@@ -61,7 +61,6 @@ RUN set -eux; \
 		apt-get install -y --no-install-recommends g++; \
 		rm -rf /var/lib/apt/lists/*; \
 		export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
-# Zstandard (9.2+) links the static libzstd.a; nothing extra is needed at runtime.
 	export BUILD_ZSTD=yes; \
 	export USE_SYSTEMD=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \

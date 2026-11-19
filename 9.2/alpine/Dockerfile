@@ -73,7 +73,6 @@ RUN set -eux; \
 	\
 	echo "Version 9.2.0 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
-# Zstandard (9.2+) links the static libzstd.a; nothing extra is needed at runtime.
 	export BUILD_ZSTD=yes; \
 	export USE_LIBBACKTRACE=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
