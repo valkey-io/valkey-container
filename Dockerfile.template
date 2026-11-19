@@ -24,7 +24,7 @@ RUN set -eux; \
 		make \
 		musl-dev \
 		openssl-dev \
-{{ if .version == "unstable" or ((.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber)) >= 902 then ( -}}
+{{ if env.version == "unstable" or ((env.version | split(".") | map(tonumber)) >= [9, 2]) then ( -}}
 		pkgconf \
 		zstd-dev \
 		zstd-static \
@@ -52,7 +52,7 @@ RUN set -eux; \
 		libc6-dev \
 		libssl-dev \
 		libsystemd-dev \
-{{ if .version == "unstable" or ((.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber)) >= 902 then ( -}}
+{{ if env.version == "unstable" or ((env.version | split(".") | map(tonumber)) >= [9, 2]) then ( -}}
 		libzstd-dev \
 		pkg-config \
 {{ ) else "" end -}}
@@ -115,7 +115,7 @@ RUN set -eux; \
 {{ ) else ( -}}
 	export BUILD_TLS=yes; \
 {{ ) end -}}
-{{ if .version == "unstable" or ((.version | split(".") | .[0] | tonumber) * 100 + (.version | split(".") | .[1] | tonumber)) >= 902 then ( -}}
+{{ if env.version == "unstable" or ((env.version | split(".") | map(tonumber)) >= [9, 2]) then ( -}}
 	export BUILD_ZSTD=yes; \
 {{ ) else "" end -}}
 {{ if env.variant == "alpine" then ( -}}
