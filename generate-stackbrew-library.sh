@@ -79,6 +79,14 @@ for version; do
 
 	fullVersion="$(jq -r '.[env.version].version' versions.json)"
 
+	# upstream publishes deb packages for GA releases only, so the pkg variant
+	# has no directory for "unstable" or for a release candidate; decided here
+	# because the alias loop below rewrites fullVersion
+	pkgVariant='yes'
+	case "$version/$fullVersion" in
+		unstable/* | *-rc*) pkgVariant='no' ;;
+	esac
+
 	versionAliases=()
 	if [[ "$fullVersion" == *-rc* ]]; then
 		versionAliases+=( $fullVersion ${version}-rc )
@@ -93,7 +101,11 @@ for version; do
 		)
 	fi
 
-	for variant in debian alpine; do
+	for variant in debian alpine pkg; do
+		if [ "$variant" = 'pkg' ] && [ "$pkgVariant" != 'yes' ]; then
+			continue
+		fi
+
 		export variant
 		dir="$version/$variant"
 
@@ -107,16 +119,26 @@ for version; do
 		fi
 
 		parent="$(awk 'toupper($1) == "FROM" && index($2, ":") > 0 { print $2 }' "$dir/Dockerfile")"
-		arches="${parentRepoToArches[$parent]}"
 
-		suite="${parent#*:}" # "bookworm-slim", "bookworm"
-		suite="${suite%-slim}" # "bookworm"
-		if [ "$variant" = 'alpine' ]; then
-			suite="alpine$suite" # "alpine3.18"
+		if [ "$variant" = 'pkg' ]; then
+			# upstream publishes packages for these two architectures only
+			arches='amd64 arm64v8'
+		else
+			arches="${parentRepoToArches[$parent]}"
 		fi
-		suiteAliases=( "${versionAliases[@]/%/-$suite}" )
-		suiteAliases=( "${suiteAliases[@]//latest-/}" )
-		variantAliases+=( "${suiteAliases[@]}" )
+
+		# the pkg variant shares its base with the debian variant, so suite
+		# aliases would collide; it is identified by its "-pkg" suffix alone
+		if [ "$variant" != 'pkg' ]; then
+			suite="${parent#*:}" # "bookworm-slim", "bookworm"
+			suite="${suite%-slim}" # "bookworm"
+			if [ "$variant" = 'alpine' ]; then
+				suite="alpine$suite" # "alpine3.18"
+			fi
+			suiteAliases=( "${versionAliases[@]/%/-$suite}" )
+			suiteAliases=( "${suiteAliases[@]//latest-/}" )
+			variantAliases+=( "${suiteAliases[@]}" )
+		fi
 
 		echo
 		cat <<-EOE
