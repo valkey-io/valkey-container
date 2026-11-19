@@ -24,6 +24,11 @@ RUN set -eux; \
 		make \
 		musl-dev \
 		openssl-dev \
+{{ if env.version == "unstable" or ((env.version | split(".") | map(tonumber)) >= [9, 2]) then ( -}}
+		pkgconf \
+		zstd-dev \
+		zstd-static \
+{{ ) else "" end -}}
 		git \
 		autoconf \
 		automake \
@@ -47,6 +52,10 @@ RUN set -eux; \
 		libc6-dev \
 		libssl-dev \
 		libsystemd-dev \
+{{ if env.version == "unstable" or ((env.version | split(".") | map(tonumber)) >= [9, 2]) then ( -}}
+		libzstd-dev \
+		pkg-config \
+{{ ) else "" end -}}
 		make \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
@@ -106,6 +115,9 @@ RUN set -eux; \
 {{ ) else ( -}}
 	export BUILD_TLS=yes; \
 {{ ) end -}}
+{{ if env.version == "unstable" or ((env.version | split(".") | map(tonumber)) >= [9, 2]) then ( -}}
+	export BUILD_ZSTD=yes; \
+{{ ) else "" end -}}
 {{ if env.variant == "alpine" then ( -}}
 	export USE_LIBBACKTRACE=yes; \
 {{ ) else ( -}}

@@ -23,6 +23,9 @@ RUN set -eux; \
 		make \
 		musl-dev \
 		openssl-dev \
+		pkgconf \
+		zstd-dev \
+		zstd-static \
 		git \
 		autoconf \
 		automake \
@@ -70,6 +73,7 @@ RUN set -eux; \
 	\
 	echo "Version 9.2.0 is 8.1 or higher - enabling USE_FAST_FLOAT"; \
 			export BUILD_TLS=yes USE_FAST_FLOAT=yes; \
+	export BUILD_ZSTD=yes; \
 	export USE_LIBBACKTRACE=yes; \
 	make -C /usr/src/valkey -j "$(nproc)" all; \
 	make -C /usr/src/valkey install; \
